@@ -1,0 +1,52 @@
+<!-- templates/nhlscores.html -->    
+{% for nhlScore in nhlScores %}
+<div class="col-md-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div id="awayTeam" class="col-md-4" style="text-align: center;">
+                <div class="col-md-12"><img src='{{nhlScore.away_team_image}}' alt='{{nhlScore.away_team}}' width="200" height="200"></div>
+                <div class="col-md-12"><h3>{{nhlScore.away_team}}</h3></div>
+            </div>
+            <div id="seriesInfo" class="col-md-4">
+                <div class="col-md-12"><h4>Round: {{nhlScore.round}}</h4></div>
+                <div class="col-md-12"><h5>Game: {{nhlScore.game_number}}</h5></div>
+                <div class="col-md-12"><p>{{nhlScore.series_info}}</p></div>
+            </div>
+            <div id="homeTeam" class="col-md-4" style="text-align: center;">
+                <div class="col-md-12"><img src='{{nhlScore.home_team_image}}' alt='{{nhlScore.home_team}}' width="200" height="200"></div>
+                <div class="col-md-12"><h3>{{nhlScore.home_team}}</h3></div>
+            </div>
+        </div>
+        <div id="gameCard" class="col-md-12">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">Team</th>
+                        <th scope="col">1</th>
+                        <th scope="col">2</th>
+                        <th scope="col">3</th>
+                        <th scope="col">OT</th>
+                        <th scope="col">Final</th>
+                    </tr>
+                    <tr id="awayTeamRow">
+                        <td>{{nhlScore.away_team}} (A)</td>
+                        <td>{{nhlScore.first_period_away_score}}</td>
+                        <td>{{nhlScore.second_period_away_score}}</td>
+                        <td>{{nhlScore.third_period_away_score}}</td>
+                        <td>{{nhlScore.overtime_away_score}}</td>
+                        <td>{{nhlScore.final_away_score}}</td>
+                    </tr>
+                    <tr id="homeTeamRow">
+                        <td>{{nhlScore.home_team}} (H)</td>
+                        <td>{{nhlScore.first_period_home_score}}</td>
+                        <td>{{nhlScore.second_period_home_score}}</td>
+                        <td>{{nhlScore.third_period_home_score}}</td>
+                        <td>{{nhlScore.overtime_home_score}}</td>
+                        <td>{{nhlScore.final_home_score}}</td>
+                    </tr>
+                </thead>
+            </table>
+        </div>                    
+    </div>
+</div>
+{% endfor %}
