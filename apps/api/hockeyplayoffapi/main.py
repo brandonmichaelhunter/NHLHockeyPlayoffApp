@@ -48,6 +48,23 @@ templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
 def on_startup():
     SQLModel.metadata.create_all(engine)
 
+@app.get("/health/live")
+async def healthlive():
+    return {"status": "alive"}
+
+async def check_database_connection():
+    try:
+        with engine.connect() as conn:
+            return True
+    except:
+        return False
+    
+@app.get("/health/ready")
+async def healthready():
+      db_ok = await check_database_connection()
+      if not db_ok:
+            raise HTTPException(status_code=503, detail="Database connection failed")
+      return {"status": "ready"}
 @app.get("/nhl_scores", response_class=HTMLResponse)
 async def read_nhl_scores(session: SessionDep, request: Request,  hx_request: Annotated[Union[str, None], Header()] = None, nhlScoreDateSelect:str=None):
     sqlStmt = select(nhl_scores).where(nhl_scores.date == nhlScoreDateSelect)
