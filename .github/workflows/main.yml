@@ -26,6 +26,7 @@ jobs:
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
+        context: .
         push: true
         tags: ghcr.io/bhunter/nhlplayoffappv1:latest
 
