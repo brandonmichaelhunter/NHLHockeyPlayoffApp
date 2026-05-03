@@ -23,6 +23,7 @@ jobs:
           echo "Secret is BLANK"
         else
           echo "Secret is SET (Length: ${#MY_SECRET})"
+          echo ${{ secrets.APP_TOKEN }}
         fi
     - name: Checkout code
       uses: actions/checkout@v2
