@@ -31,7 +31,7 @@ jobs:
       with:
         file: ./apps/Dockerfile
         push: true
-        tags: ghcr.io/bhunter/nhlplayoffappv1:latest
+        tags: bhunter/nhlplayoffappv1:latest
 
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
