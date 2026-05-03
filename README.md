@@ -23,4 +23,11 @@ A repo to host my NHL Hockey Playoff App
   - cd into your app directory: ```cd apps/api/hockeyplayoffapi```
   - uv run fastapi dev
   
+# Add PyTest
+- uv add --dev pytest
 
+# Docker
+- How to build a dockerfile locally
+  - ```docker build -t hockeyplayoffapi:latest .```
+- How to run a docker container locally
+  - ```docker run -p 8000:8000 hockeyplayoffapi:latest
