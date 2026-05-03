@@ -39,14 +39,14 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/bhunter/nhlplayoffappv1:latest
+        images: ghcr.io/NHLHockeyPlayoffApp/nhlplayoffappv1:latest
       
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
         file: ./apps/Dockerfile
         push: true
-        tags: ghcr.io/bhunter/nhlplayoffappv1:latest
+        tags: ghcr.io/NHLHockeyPlayoffApp/nhlplayoffappv1:latest
 
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
