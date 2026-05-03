@@ -7,7 +7,7 @@ COPY ./requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./api ./api
-COPY ./data/hockeyplayoffdb/hockeyplayoff.db ./data/hockeyplayoffdb/hockeyplayoff.db
+COPY ./apps/data/hockeyplayoffdb/hockeyplayoff.db ./data/hockeyplayoffdb/hockeyplayoff.db
 ENV PYTHONPATH=/api
 
 EXPOSE 8000
