@@ -24,7 +24,7 @@ jobs:
       with:
          registry: ghcr.io
          username: ${{ github.actor }}
-         password: ${{ secrets.GH_DOCKER_ACCESS_TOKEN }}
+         password: ${{ env.DOCKER_TOKEN }}
     
     - name: Build and Push
       uses: docker/build-push-action@v5
@@ -36,3 +36,4 @@ jobs:
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
       DOCKER_BUILDKIT: 1
+      DOCKER_TOKEN: ${{ secrets.GH_DOCKER_ACCESS_TOKEN }}
