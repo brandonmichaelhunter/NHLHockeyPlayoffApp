@@ -7,32 +7,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
+from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_BASE_DIR = Path(__file__).resolve().parent
-class nhl_scores(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    date: str = Field(index=True)
-    home_team:str
-    home_team_image:str
-    away_team:str
-    away_team_image:str
-    home_score:int=0
-    away_score:int=0
-    first_period_home_score:int=0
-    second_period_home_score:int=0
-    third_period_home_score:int=0
-    overtime_home_score:int=0
-    final_home_score:int=0
-    first_period_away_score:int=0
-    second_period_away_score:int=0
-    third_period_away_score:int=0
-    overtime_away_score:int=0
-    final_away_score:int=0
-    round:str=""
-    game_number:int=0
-    series_info:str=""
-#sqlite_file_name = "/data/hockeyplayoff.db"
-#sqlite_url = f"sqlite:///{sqlite_file_name}"
+
 DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, './data/hockeyplayoff.db')}"
 engine = create_engine(DATABASE_URL, echo=True)
 
@@ -42,6 +20,7 @@ def get_session():
 
 SessionDep = Annotated[Session, Depends(get_session)]
 app = FastAPI()
+
 templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
 
 @app.on_event("startup")
@@ -53,11 +32,11 @@ async def healthlive():
     return {"status": "alive"}
 
 async def check_database_connection():
-    try:
-        with engine.connect() as conn:
-            return True
-    except:
-        return False
+          try:
+                with engine.connect() as conn:
+                     return True
+          except:
+                return False
     
 @app.get("/health/ready")
 async def healthready():
