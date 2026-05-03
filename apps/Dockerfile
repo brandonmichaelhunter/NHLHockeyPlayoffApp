@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./api ./api
 COPY ./data/hockeyplayoffdb/hockeyplayoff.db ./data/hockeyplayoffdb/hockeyplayoff.db
+ENV PYTHONPATH=/api
 
 EXPOSE 8000
 CMD ["uvicorn", "api.hockeyplayoffapi.main:app", "--host", "0.0.0.0", "--port", "8000"]
