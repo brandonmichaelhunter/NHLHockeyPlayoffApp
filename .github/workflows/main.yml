@@ -17,14 +17,6 @@ jobs:
       packages: write
     
     steps:
-    - name: Debug secret length
-      run: |
-        if [ -z "${{ secrets.APP_TOKEN }}" ]; then
-          echo "Secret is BLANK"
-        else
-          echo "Secret is SET (Length: ${#MY_SECRET})"
-          echo ${{ secrets.APP_TOKEN }}
-        fi
     - name: Checkout code
       uses: actions/checkout@v2
     
@@ -39,16 +31,15 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/nhlhockeyplayoffapp/nhlplayoffappv1:latest
+        images: ghcr.io/brandonmichaelhunter/nhlplayoffappv1:latest
       
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
         file: ./apps/Dockerfile
         push: true
-        tags: ghcr.io/nhlhockeyplayoffapp/nhlplayoffappv1:latest
+        tags: ghcr.io/brandonmichaelhunter/nhlplayoffappv1:latest
 
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
       DOCKER_BUILDKIT: 1
-      DOCKER_TOKEN: ${{ secrets.GH_DOCKER_ACCESS_TOKEN }}
