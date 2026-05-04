@@ -31,14 +31,14 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/brandonmichaelhunter/nhlplayoffappv1:latest
+        images: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
       
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
         file: ./apps/Dockerfile
         push: true
-        tags: ghcr.io/brandonmichaelhunter/nhlplayoffappv1:latest
+        tags: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
 
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
