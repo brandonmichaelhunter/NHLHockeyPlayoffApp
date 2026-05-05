@@ -55,7 +55,7 @@ jobs:
       run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     - name: Execute Image
       run: |
-          docker run -d -p 8080:8080 ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
+          docker run -d -p 8000:8000 ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
           # Wait for the API to be ready
           sleep 5 
     - name: API Health Check
