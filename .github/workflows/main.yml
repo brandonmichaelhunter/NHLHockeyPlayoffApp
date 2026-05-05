@@ -52,7 +52,7 @@ jobs:
       
     steps:
     - name: Pull image from GHCR
-      run: docker pull -name test_api_service ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
+      run: docker pull --name test_api_service ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     - name: Execute Image
       run: |
           docker run -d -p 8000:8000 ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
