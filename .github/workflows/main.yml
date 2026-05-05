@@ -45,12 +45,11 @@ jobs:
   health-checker:
     needs: build-api-docker # This makes 'test' wait for 'build'
     runs-on: ubuntu-latest
-    container:
-      image: curlimages/curl:latest # Use an image that has curl pre-installed
     environment: NHLHockeyAppEnv
     permissions:
       contents: read
       packages: write
+      
     steps:
     - name: Pull image from GHCR
       run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
