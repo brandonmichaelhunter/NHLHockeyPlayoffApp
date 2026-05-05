@@ -9,7 +9,7 @@ on:
 
 # Jobs
 jobs:
-  build-example:
+  build-api-docker:
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
@@ -40,8 +40,18 @@ jobs:
         push: true
         tags: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     
+
+    
+  health-checker:
+    runs-on: ubuntu-latest
+    environment: NHLHockeyAppEnv
+    permissions:
+      contents: read
+      packages: write
+    steps:
     - name: Pull image from GHCR
       run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
+      
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
       DOCKER_BUILDKIT: 1
