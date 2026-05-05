@@ -39,7 +39,9 @@ jobs:
         file: ./apps/Dockerfile
         push: true
         tags: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
-
+    
+    - name: Pull image from GHCR
+      run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
       DOCKER_BUILDKIT: 1
