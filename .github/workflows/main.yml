@@ -60,7 +60,7 @@ jobs:
           sleep 5 
     - name: API Health Check
       run: |
-        RESPONSE=$(echo curl -s http://localhost:8000/health/live)
+        RESPONSE=$(curl -s http://localhost:8000/health/live)
         echo "Full Response: $RESPONSE"
         if [ "$RESPONSE" != '{"status":"ready"}' ]; then
             echo "Error: API status failed"
