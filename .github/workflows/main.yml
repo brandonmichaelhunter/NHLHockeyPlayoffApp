@@ -52,7 +52,7 @@ jobs:
       
     steps:
     - name: Pull image from GHCR
-      run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
+      run: docker pull -name test_api_service ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     - name: Execute Image
       run: |
           docker run -d -p 8000:8000 ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
@@ -60,10 +60,19 @@ jobs:
           sleep 5 
     - name: API Health Check
       run: |
+        RESPONSE=$(echo curl -s http://localhost:8000/health/live)
         curl -v http://localhost:8000/health/live
+        if [ "$RESPONSE" != '{"status":"ready"}' ]; then
+            echo "Error: API status failed"
+            exit 1
+          fi
     - name: DB Connection Heatlh Check
       run: |
         curl -v http://localhost:8000/health/ready
+    - name: Cleanup
+      if: always()
+      run: docker stop test_api_service && docker rm test_api_service
+
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
       DOCKER_BUILDKIT: 1
