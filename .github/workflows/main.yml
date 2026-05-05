@@ -43,6 +43,7 @@ jobs:
 
     
   health-checker:
+    needs: build-api-docker # This makes 'test' wait for 'build'
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
