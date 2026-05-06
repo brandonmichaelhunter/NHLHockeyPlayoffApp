@@ -7,7 +7,12 @@ from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
-from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
+if os.environ.get('DOCKER_ENV'):
+   from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+else:
+   from apps.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_BASE_DIR = Path(__file__).resolve().parent
 
@@ -43,7 +48,7 @@ async def healthready():
       db_ok = await check_database_connection()
       if not db_ok:
             raise HTTPException(status_code=503, detail="Database connection failed")
-      return {"status": "ready"}
+      return "Database connection successful"
 @app.get("/nhl_scores", response_class=HTMLResponse)
 async def read_nhl_scores(session: SessionDep, request: Request,  hx_request: Annotated[Union[str, None], Header()] = None, nhlScoreDateSelect:str=None):
     sqlStmt = select(nhl_scores).where(nhl_scores.date == nhlScoreDateSelect)
