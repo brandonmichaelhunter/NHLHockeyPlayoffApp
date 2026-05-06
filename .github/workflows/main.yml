@@ -60,7 +60,6 @@ jobs:
           sleep 5 
     - name: API Health Check
       run: |
-        RESPONSE=$(curl -s http://localhost:8000/health/live)
         STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health/live)
         if [ "$STATUS_CODE" -ne 200 ]; then
             echo "The request failed with status: $STATUS_CODE"
@@ -70,7 +69,11 @@ jobs:
         fi
     - name: DB Connection Heatlh Check
       run: |
-        curl -v http://localhost:8000/health/ready
+        RESPONSE=$(curl -s http://localhost:8000/health/ready)
+        if ["$RESPONSE" -ne "Database connection successful"]; then
+           echo "Database connection was unccessful"
+           exit 1
+        fi
 
 
     env:
