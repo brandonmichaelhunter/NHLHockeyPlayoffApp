@@ -71,9 +71,7 @@ jobs:
     - name: DB Connection Heatlh Check
       run: |
         curl -v http://localhost:8000/health/ready
-    - name: Cleanup
-      if: always()
-      run: docker stop ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest 
+
 
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
