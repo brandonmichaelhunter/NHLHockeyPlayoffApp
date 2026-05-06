@@ -29,5 +29,6 @@ A repo to host my NHL Hockey Playoff App
 # Docker
 - How to build a dockerfile locally
   - ```docker build -t hockeyplayoffapi:latest .```
+  - ```(new way) docker buildx build -f ./apps/Dockerfile . -t nhlapi:latest
 - How to run a docker container locally
   - ```docker run -p 8000:8000 hockeyplayoffapi:latest
