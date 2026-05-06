@@ -61,11 +61,13 @@ jobs:
     - name: API Health Check
       run: |
         RESPONSE=$(curl -s http://localhost:8000/health/live)
-        
-        if [ "$RESPONSE" != "{'status':'ready'}" ]; then
-            echo "Error: API status failed"
+        STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health/live)
+        if [ "$STATUS_CODE" -ne 200 ]; then
+            echo "The request failed with status: $STATUS_CODE"
             exit 1
-          fi
+        else
+            echo "The request was sucessfull with status: $STATUS_CODE"
+        fi
     - name: DB Connection Heatlh Check
       run: |
         curl -v http://localhost:8000/health/ready
