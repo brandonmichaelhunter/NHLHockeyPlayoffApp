@@ -41,9 +41,19 @@ jobs:
         tags: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     
 
-    
+  unit-test-api:
+    needs: build-api-docker
+    runs-on: ubuntu-latest
+    environment: NHLHockeyAppEnv
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Run API Unit Tests
+      run: pytest ./apps/api/tests/unit_tests/test_main_unit.py
+  
   health-checker:
-    needs: build-api-docker # This makes 'test' wait for 'build'
+    needs: unit-test-api # This makes 'test' wait for 'build'
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
