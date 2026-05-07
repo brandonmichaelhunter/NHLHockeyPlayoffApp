@@ -25,7 +25,11 @@ A repo to host my NHL Hockey Playoff App
   
 # Add PyTest
 - uv add --dev pytest
-
+- uv add --dev pytest-asyncio
+- uv add --dev httpx
+- To run tests: 
+  - cd into your app directory: ```cd apps/api/tests```
+  - ```uv run pytest```
 # Docker
 - How to build a dockerfile locally
   - ```docker build -t hockeyplayoffapi:latest .```
