@@ -49,8 +49,19 @@ jobs:
       contents: read
       packages: write
     steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+          python-version: '3.13'
+          cache: 'pip'
+    - name: Install dependencies
+      run: | 
+           python -m pip install --upgrade pip
+           pip install -r .apps/requirements.txt 
+           pip install pytest
     - name: Run API Unit Tests
-      run: pytest ./apps/api/tests/unit_tests/test_main_unit.py
+      run: python -m pytest ./apps/api/tests/unit_tests/test_main_unit.py
   
   health-checker:
     needs: unit-test-api # This makes 'test' wait for 'build'
@@ -61,6 +72,7 @@ jobs:
       packages: write
       
     steps:
+    
     - name: Pull image from GHCR
       run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     - name: Execute Image
