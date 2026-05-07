@@ -33,17 +33,22 @@ async def test_nhl_scores_returns_json_without_hx_header():
 @pytest.mark.anyio
 async def test_nhl_scores_returns_template_with_hx_header():
     
-
+    # Mock the nhl_scores fake data.
     fake_scores = [{"date": "2024-05-01", "home_team": "A", "away_team": "B"}]
+    # Mock the database session.
     mock_session = MagicMock()
+    # Set up the mock to return the fake scores when exec(). all() is called.
     mock_session.exec.return_value.all.return_value = fake_scores
 
+    # Override the get_session dependency to return our mock session.
     def override_get_session():
         yield mock_session
-
+        
+    # Overriding the Session dependency in the FastAPI app to use our mock session.
     main_module.app.dependency_overrides[main_module.get_session] = override_get_session
 
     try:
+        # 
         with patch.object(
             main_module.templates,
             "TemplateResponse",
