@@ -36,7 +36,7 @@ jobs:
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
-        file: ./apps/Dockerfile
+        file: ./src/Dockerfile
         push: true
         tags: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     

@@ -18,21 +18,35 @@ A repo to host my NHL Hockey Playoff App
 - Packages to install
   - uv add fastapi --extra standard
   - uv add sqlmodel
+# How to run API and ETL apps locally
 - Activate the virtual environment: ```source .venv/Scripts/activate```
-- Running the app
-  - cd into your app directory: ```cd apps/api/hockeyplayoffapi```
-  - uv run fastapi dev
+- How to run FastAPI app locally:
+  - Activate the virtual environment: ```source .venv/Scripts/activate```
+  - ```cd NHLHockeyPlayoffApp``` to get to the root of the project
+  - ```poe run_api``` to run the app locally
+- How to run the ETL locally:
+  - Activate the virtual environment: ```source .venv/Scripts/activate```
+  - ```cd NHLHockeyPlayoffApp``` to get to the root of the project
+  - ```poe run_etl``` to run the ETL locally
   
-# Add PyTest
-- uv add --dev pytest
-- uv add --dev pytest-asyncio
-- uv add --dev httpx
-- To run tests: 
-  - cd into your app directory: ```cd apps/api/tests```
-  - ```uv run pytest```
+# Testing
+- How to run tests:
+  - ```cd NHLHockeyPlayoffApp ``` to get to the root of the project
+  - ```poe unit_test``` to run unit tests
+  - ```poe integration_test``` to run integration tests
+
+# Linting
+ - How to run linter
+   - ``` poe lint ```
+
+# Runing the app locally
+- ```cd NHLHockeyPlayoffApp ``` to get to the root of the project
+- ```poe run_app``` to run the app locally
+
 # Docker
 - How to build a dockerfile locally
-  - ```docker build -t hockeyplayoffapi:latest .```
-  - ```(new way) docker buildx build -f ./apps/Dockerfile . -t nhlapi:latest
+  - ``` cd NHLHockeyPlayoffApp ``` to get to the root of the project
+  - ``` poe docker_build ``` to build the docker image locally
 - How to run a docker container locally
-  - ```docker run -p 8000:8000 hockeyplayoffapi:latest
+  - ``` poe docker_run ``` to run the docker container locally
+

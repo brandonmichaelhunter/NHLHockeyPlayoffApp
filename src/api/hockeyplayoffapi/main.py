@@ -11,7 +11,7 @@ print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get('DOCKER_ENV'):
    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 else:
-   from apps.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+   from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_BASE_DIR = Path(__file__).resolve().parent

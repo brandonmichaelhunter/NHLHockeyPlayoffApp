@@ -1,9 +1,11 @@
 import sqlite3
 import requests
 from datetime import datetime, timedelta,date
-from models.nhl_score import nhl_score 
-
-class hockeyplayoff_etl:
+from src.data.hockeyplayoffetl.models.nhl_score import nhl_score 
+import os
+from pathlib import Path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+class NHLDataManager:
       dbConn = None
       dbCursor = None
       _dbFilePath = None
@@ -380,7 +382,7 @@ class hockeyplayoff_etl:
                     game_score.final_home_score = results['games'][i]['homeTeam']['score']
                     game_score.final_away_score = results['games'][i]['awayTeam']['score']
                     nhlScores.append(game_score)
-              return nhlScores
+          return nhlScores
         
       def clear_nhl_scores_from_db(self,dbCursor, dbConnection):
           try:
@@ -424,7 +426,19 @@ class hockeyplayoff_etl:
           self.debugPrint("Importing NHL Scores into database")
           return self.save_nhl_scores_to_db(dbCursor, dbConnection)
           print("NHL Scores import complete")
+      def copy_db_file(self, source_path, destination_path):
+          try:
+              with open(source_path, 'rb') as src_file:
+                  with open(destination_path, 'wb') as dest_file:
+                      dest_file.write(src_file.read())
+              self.debugPrint(f"Database file copied from {source_path} to {destination_path}")
+              return True
+          except Exception as e:
+              self.debugPrint(f"Error copying database file: {e}")
+              return False
 
-
-etl = hockeyplayoff_etl('../hockeyplayoffdb/hockeyplayoff.db', True)        
+etl = NHLDataManager('./src/data/hockeyplayoffdb/hockeyplayoff.db', True)
 etl.run_data_extraction_process()
+db_path = Path(__file__).resolve().parent.parent.parent  / "api" / "hockeyplayoffapi" / "data" / "hockeyplayoff.db"
+etl.copy_db_file('./src/data/hockeyplayoffdb/hockeyplayoff.db', db_path)
+    

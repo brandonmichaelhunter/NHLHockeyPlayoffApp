@@ -1,12 +1,14 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
-from apps.api.hockeyplayoffapi.main import app
+from src.api.hockeyplayoffapi.main import app
 from unittest.mock import MagicMock, patch
 from sqlmodel import Session
 from fastapi import HTTPException
-from apps.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
-from apps.api.hockeyplayoffapi import main as main_module
+from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+from src.api.hockeyplayoffapi import main as main_module
 from fastapi.responses import HTMLResponse
+
+@pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_json_without_hx_header():
 
@@ -29,7 +31,7 @@ async def test_nhl_scores_returns_json_without_hx_header():
     finally:
         main_module.app.dependency_overrides.clear()
 
-
+@pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_template_with_hx_header():
     
@@ -72,6 +74,7 @@ async def test_nhl_scores_returns_template_with_hx_header():
 
 
             
+@pytest.mark.unit
 @pytest.mark.anyio
 async def test_root():
     # Use ASGITransport to connect the client directly to the FastAPI app
