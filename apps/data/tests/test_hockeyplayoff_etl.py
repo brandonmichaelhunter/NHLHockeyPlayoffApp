@@ -1,2 +1,0 @@
-import pytest
-from apps.data.hockeyplayoffetl.hockeyplayoff_etl import create_system_tables, get_nhl_playoff_game_dates, get_nhl_scores, compile_nhl_scores, clear_nhl_scores_from_db,save, transform_nhl_scores, load_nhl_scores
