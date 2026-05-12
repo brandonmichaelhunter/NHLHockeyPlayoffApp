@@ -30,6 +30,7 @@ dependencies = [
     "markdown-it-py==4.0.0",
     "markupsafe==3.0.3",
     "mdurl==0.1.2",
+    "poethepoet>=0.45.0",
     "pydantic==2.13.3",
     "pydantic-core==2.46.3",
     "pydantic-extra-types==2.11.1",
@@ -94,3 +95,4 @@ run_api = "uv run fastapi dev ./src/api/hockeyplayoffapi/main.py --reload"
 run_etl= "python -m src.data.hockeyplayoffetl.hockeyplayoff_etl"
 docker_build = "docker build -f 'src/Dockerfile' -t hockeyplayoff:latest ."
 docker_run = "docker run -p 8000:8000 hockeyplayoff:latest"
+install_project = "uv sync --locked"
