@@ -30,6 +30,7 @@ dependencies = [
     "markdown-it-py==4.0.0",
     "markupsafe==3.0.3",
     "mdurl==0.1.2",
+    "poethepoet>=0.45.0",
     "pydantic==2.13.3",
     "pydantic-core==2.46.3",
     "pydantic-extra-types==2.11.1",
