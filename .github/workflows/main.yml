@@ -79,7 +79,7 @@ jobs:
            pip install -r ./apps/requirements.txt 
            pip install pytest
     - name: Run API Unit Tests
-      run: python -m pytest ./apps/api/tests/unit_tests/test_main_unit.py
+      run: poe unit_test
     
   integration-test-api:
     needs: unit-test-api
