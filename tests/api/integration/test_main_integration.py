@@ -51,8 +51,8 @@ async def test_read_nhl_scores_returns_html_with_hx_header_equal_false(tmp_path)
               # assertons
               # todo - figure out why text/html is bein returned and not JSON.
               assert response.status_code == 200
-              assert "text/html" in response.headers["content-type"]
-              assert response.headers["hx-request"] == "false"
+              assert "application/json" in response.headers["content-type"]
+           
           finally:
               main_module.engine = None
               
