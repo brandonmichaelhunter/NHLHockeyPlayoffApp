@@ -54,7 +54,7 @@ async def read_nhl_scores(session: SessionDep, request: Request,  hx_request: An
     sqlStmt = select(nhl_scores).where(nhl_scores.date == nhlScoreDateSelect)
     nhlScores = session.exec(sqlStmt).all()
     
-    if hx_request:
+    if hx_request != "false":
        resp = templates.TemplateResponse(request=request, name="nhlscores.html", context={"nhlScores": nhlScores})
        return resp
     return JSONResponse(content=jsonable_encoder(nhlScores))
