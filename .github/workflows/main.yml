@@ -73,11 +73,6 @@ jobs:
       with:
           python-version: '3.13'
           cache: 'pip'
-    - name: Install dependencies
-      run: | 
-           python -m pip install --upgrade pip
-           pip install -r ./apps/requirements.txt 
-           pip install pytest
     - name: Run API Unit Tests
       run: poe unit_test
     
