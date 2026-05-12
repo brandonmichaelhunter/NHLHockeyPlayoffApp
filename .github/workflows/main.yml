@@ -27,15 +27,16 @@ jobs:
         
     - name: Install uv
       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-
-    - name: Install Poe
-      run: pip install poethepoet
         
-    - name: Install Project with UV
+    - name: Install UV dependencies
       run: uv sync --locked
-      
-    - name: Install Project
+
+    - name: Install UV dev dependencies
+      run: uv sync --all-extras --dev
+
+    - name: Run Task
       run: poe install_project
+      
       
     - name: Docker Login/Push
       uses: docker/login-action@v3
