@@ -23,7 +23,7 @@ async def test_nhl_scores_returns_json_without_hx_header():
 
     try:
         async with AsyncClient(transport=ASGITransport(app=main_module.app), base_url="http://localhost") as ac:
-            response = await ac.get("/nhl_scores", params={"nhlScoreDateSelect": "2024-05-01"})
+            response = await ac.get("/nhl_scores", params={"nhlScoreDateSelect": "2024-05-01"}, headers={"hx-request": "false"})
 
         assert response.status_code == 200
         assert response.json() == fake_scores

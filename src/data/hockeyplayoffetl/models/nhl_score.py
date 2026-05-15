@@ -24,3 +24,4 @@ class nhl_score:
     game_number:int=0
     series_info:str=""
 
+
