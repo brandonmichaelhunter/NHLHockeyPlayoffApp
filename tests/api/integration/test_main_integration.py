@@ -51,7 +51,7 @@ async def test_read_nhl_scores_returns_html_with_hx_header_equal_false(tmp_path)
               # assertons
               assert response.status_code == 200
               assert "application/json" in response.headers["content-type"]
-              
+           
           finally:
               main_module.engine = None
               
