@@ -3,11 +3,14 @@ import requests
 from datetime import datetime, timedelta,date
 
 from sqlmodel import true
+from src.data.hockeyplayoffetl.models.nhl_goaltending_win_leader import nhl_goaltending_win_leader
 from src.data.hockeyplayoffetl.models.nhl_score import nhl_score 
 from .models.nhl_team import nhl_score
 from .models.nhl_skate_leaders import nhl_skate_leader
 from .models.data_request import data_request
 from .models.nhl_goaltending_gaa_leader import nhl_goaltending_gaa_leader
+from .models.nhl_goaltending_save_pct_leader import nhl_goaltending_save_pct_leader
+from .models.nhl_skate_goal_leader import nhl_skate_goal_leader
 import os
 from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -54,6 +57,18 @@ class NHLDataManager:
               self.process_nhl_goaltending_gaa_leaders()
               self.debugPrint("Getting NHL Goaltending GAA Leaders and saving to database complete.")
               
+              self.debugPrint("Getting NHL Goaltending Wins Leaders and saving to database.")
+              self.process_nhl_goaltending_wins_leaders()
+              self.debugPrint("Getting NHL Goaltending Wins Leaders and saving to database complete.")
+              
+              self.debugPrint("Getting NHL Goaltending Save Percentage Leaders and saving to database.")
+              self.process_nhl_goaltending_savepct_leaders()
+              self.debugPrint("Getting NHL Goaltending Save Percentage Leaders and saving to database complete.")
+              
+              self.debugPrint("Getting NHL Skate Goal Leaders and saving to database.")
+              self.process_nhl_skate_goal_leaders()
+              self.debugPrint("Getting NHL Skate Goal Leaders and saving to database complete.")
+
               self.closeDBConnection()
               self.debugPrint("Data extraction process complete.")
               return nhlScores
@@ -685,10 +700,407 @@ class NHLDataManager:
           except Exception as e:
                  self.debugPrint("process_nhl_goaltending_gaa_leaders - Error processing " + processRequest.label + ": " + str(e))
                  return False
-          
       # End - Get NHL Goaltending GAA Leaders
       #---------------------------------------------------
       
+      #---------------------------------------------------
+      # Start - Get NHL Goaltending Wins Leaders
+      def create_nhl_goaltending_wins_leaders_table(self, request:data_request=None)->bool:
+            try:
+                self.debugPrint("Creating "+ request.label +" table in database")
+                query = '''
+                        CREATE TABLE IF NOT EXISTS nhl_goaltending_wins_leaders (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            rank integer not null,
+                            first_name text not null,
+                            last_name text not null,
+                            team_name text not null,
+                            wins integer not null,
+                            headshot_url text not null,
+                            teamlogo_url text not null,
+                            datecreated DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );
+                        '''
+                     # Execute the SQL command
+                request.dbCursor.execute(query)
+                # Commit the changes
+                request.dbConn.commit()
+                self.debugPrint(request.label +" table created in database successfully")
+                return True
+            except sqlite3.OperationalError:
+                     self.debugPrint("Error occurred while creating "+ request.label +" table.")
+                     request.dbConn.rollback()
+                     self.debugPrint("Rolled back the transaction.")
+                     request.dbConn.close()
+                     self.debugPrint("Closed the database connection.")
+                     return False
+      def get_nhl_goaltending_wins_leaders_data(self) ->any:
+          try:
+              self.debugPrint("Fetching data from API")
+              url = "https://api-web.nhle.com/v1/goalie-stats-leaders/20252026/3?categories=wins&limit=5"
+              response = requests.get(url)
+              if response.status_code == 200:
+                  data = response.json()
+                  self.debugPrint("Data fetched from API successfully")
+                  return data
+              else:
+                  self.debugPrint(f"Error fetching NHL goaltending wins leaders: {response.status_code}")
+                  return None
+          except Exception as e:
+              self.debugPrint(f"Exception occurred while fetching NHL goaltending wins leaders: {e}")
+              return None
+      def compile_nhl_goaltending_wins_leaders(self, request:data_request=None)->list:
+          try:
+              self.debugPrint("Compiling data into list of "+ request.label)
+              jsonDataList = request.jsonData
+              retDataList = []
+              counter = 0
+              rows = len(jsonDataList['wins'])
+              self.debugPrint("Number of goaltending wins leaders: "+str(rows))
+              for i in range(rows):
+                  leader = jsonDataList['wins'][i]
+                  nhlGoaltendingWinsLeader = nhl_goaltending_win_leader()
+                  nhlGoaltendingWinsLeader.rank = i+1
+                  nhlGoaltendingWinsLeader.first_name = leader['firstName']['default']
+                  nhlGoaltendingWinsLeader.last_name = leader['lastName']['default']
+                  nhlGoaltendingWinsLeader.team_name = leader['teamName']['default']
+                  nhlGoaltendingWinsLeader.wins = leader['value']
+                  nhlGoaltendingWinsLeader.headshot_url = leader['headshot']
+                  nhlGoaltendingWinsLeader.teamlogo_url = leader['teamLogo']
+                  retDataList.append(nhlGoaltendingWinsLeader)
+              self.debugPrint("Compiled " + request.label + " successfully")
+              return retDataList
+          except Exception as e:
+              self.debugPrint("compile_nhl_goaltending_wins_leaders - Error compiling " + request.label + ": " + str(e))
+              return []
+      def clear_nhl_goaltending_wins_leaders_table_from_db(self, request:data_request=None)->bool:
+          try:
+              self.debugPrint("Clearing " + request.label + " from database")
+              sqlQuery = '''delete from nhl_goaltending_wins_leaders'''
+              request.dbCursor.execute(sqlQuery)
+              request.dbConn.commit()
+              self.debugPrint(request.label + " cleared from database successfully")
+          except Exception as e:
+              self.debugPrint("Error clearing " + request.label + " from database: " + str(e))
+              self.debugPrint("Error saving " + request.label + " to database: " + str(e))
+              request.dbConn.rollback()
+              self.debugPrint("Rolled back the transaction.")
+              request.dbConn.close()
+              self.debugPrint("Closed the database connection.")
+              exit(1)
+      def save_nhl_goaltending_wins_leaders_to_db(self, request:data_request=None)->bool:
+          try:
+                modelData = request.entityData # self.compile_nhl_goaltending_wins_leaders()
+                self.debugPrint("Inserting " + request.label + " into database")
+                for leader in modelData:
+                    # insert data into database.
+                    sqlQuery = '''insert into nhl_goaltending_wins_leaders(rank,first_name,last_name,team_name,wins,headshot_url,teamlogo_url)
+                                values(?,?,?,?,?,?,?)'''
+                    data = (leader.rank, leader.first_name, leader.last_name, leader.team_name, leader.wins, leader.headshot_url, leader.teamlogo_url)
+                    request.dbCursor.execute(sqlQuery, data)
+                    self.debugPrint("Committing " + request.label + " to database")
+                    request.dbConn.commit()
+                return True
+          except Exception as e:
+                 self.debugPrint("save_nhl_goaltending_wins_leaders_to_db - Error saving " + request.label + " to database: " + str(e))
+                 request.dbConn.rollback()
+                 self.debugPrint("Rolled back the transaction.")
+                 request.dbConn.close()
+                 self.debugPrint("Closed the database connection.")
+                 exit(1)
+      def process_nhl_goaltending_wins_leaders(self)->bool:
+          try:
+                # create data table.
+                processRequest = data_request()
+                processRequest.dbCursor = self.dbCursor
+                processRequest.dbConn = self.dbConn
+                processRequest.label = "NHL Goaltending Wins Leaders"
+                # create data table for nhl skating leaders.
+                self.create_nhl_goaltending_wins_leaders_table(processRequest)
+                
+                # get json data from api.
+                processRequest.jsonData = self.get_nhl_goaltending_wins_leaders_data()
+                
+                # clear existing data from database table.
+                self.clear_nhl_goaltending_wins_leaders_table_from_db(processRequest)
+                
+                # compile data into list of nhl_skate_leader objects.
+                processRequest.entityData = self.compile_nhl_goaltending_wins_leaders(processRequest)
+                
+                # save data to database. 
+                self.save_nhl_goaltending_wins_leaders_to_db(processRequest)
+                return True
+          except Exception as e:
+                 self.debugPrint("process_nhl_goaltending_wins_leaders - Error processing " + processRequest.label + ": " + str(e))
+                 return False
+      # End - Get NHL Goaltending Wins Leaders
+      #---------------------------------------------------
+      
+      #---------------------------------------------------
+      # Start - Get NHL Goaltending Wins Leaders
+      def create_nhl_goaltending_savepct_leaders_table(self, request:data_request=None)->bool:
+            try:
+                self.debugPrint("Creating "+ request.label +" table in database")
+                query = '''
+                        CREATE TABLE IF NOT EXISTS nhl_goaltending_savepct_leaders (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            rank integer not null,
+                            first_name text not null,
+                            last_name text not null,
+                            team_name text not null,
+                            save_percentage real not null,
+                            headshot_url text not null,
+                            teamlogo_url text not null,
+                            datecreated DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );
+                        '''
+                     # Execute the SQL command
+                request.dbCursor.execute(query)
+                # Commit the changes
+                request.dbConn.commit()
+                self.debugPrint(request.label +" table created in database successfully")
+                return True
+            except sqlite3.OperationalError:
+                     self.debugPrint("Error occurred while creating "+ request.label +" table.")
+                     request.dbConn.rollback()
+                     self.debugPrint("Rolled back the transaction.")
+                     request.dbConn.close()
+                     self.debugPrint("Closed the database connection.")
+                     return False
+      def get_nhl_goaltending_savepct_leaders_data(self) ->any:
+          try:
+              self.debugPrint("Fetching data from API")
+              url = "https://api-web.nhle.com/v1/goalie-stats-leaders/20252026/3?categories=savePctg&limit=5"
+              response = requests.get(url)
+              if response.status_code == 200:
+                  data = response.json()
+                  self.debugPrint("Data fetched from API successfully")
+                  return data
+              else:
+                  self.debugPrint(f"Error fetching NHL goaltending save percentage leaders: {response.status_code}")
+                  return None
+          except Exception as e:
+              self.debugPrint(f"Exception occurred while fetching NHL goaltending save percentage leaders: {e}")
+              return None
+      def compile_nhl_goaltending_savepct_leaders(self, request:data_request=None)->list:
+          try:
+              self.debugPrint("Compiling data into list of "+ request.label)
+              jsonDataList = request.jsonData
+              retDataList = []
+              counter = 0
+              rows = len(jsonDataList['savePctg'])
+              self.debugPrint("Number of goaltending save percentage leaders: "+str(rows))
+              for i in range(rows):
+                  leader = jsonDataList['savePctg'][i]
+                  nhlGoaltendingSavePctLeader = nhl_goaltending_save_pct_leader()
+                  nhlGoaltendingSavePctLeader.rank = i+1
+                  nhlGoaltendingSavePctLeader.first_name = leader['firstName']['default']
+                  nhlGoaltendingSavePctLeader.last_name = leader['lastName']['default']
+                  nhlGoaltendingSavePctLeader.team_name = leader['teamName']['default']
+                  nhlGoaltendingSavePctLeader.save_percentage = leader['value']
+                  nhlGoaltendingSavePctLeader.headshot_url = leader['headshot']
+                  nhlGoaltendingSavePctLeader.teamlogo_url = leader['teamLogo']
+                  retDataList.append(nhlGoaltendingSavePctLeader)
+              self.debugPrint("Compiled " + request.label + " successfully")
+              return retDataList
+          except Exception as e:
+              self.debugPrint("compile_nhl_goaltending_savepct_leaders - Error compiling " + request.label + ": " + str(e))
+              return []
+      def clear_nhl_goaltending_savepct_leaders_table_from_db(self, request:data_request=None)->bool:
+          try:
+              self.debugPrint("Clearing " + request.label + " from database")
+              sqlQuery = '''delete from nhl_goaltending_savepct_leaders'''
+              request.dbCursor.execute(sqlQuery)
+              request.dbConn.commit()
+              self.debugPrint(request.label + " cleared from database successfully")
+          except Exception as e:
+              self.debugPrint("Error clearing " + request.label + " from database: " + str(e))
+              self.debugPrint("Error saving " + request.label + " to database: " + str(e))
+              request.dbConn.rollback()
+              self.debugPrint("Rolled back the transaction.")
+              request.dbConn.close()
+              self.debugPrint("Closed the database connection.")
+              exit(1)
+      def save_nhl_goaltending_savepct_leaders_to_db(self, request:data_request=None)->bool:
+          try:
+                modelData = request.entityData # self.compile_nhl_goaltending_wins_leaders()
+                self.debugPrint("Inserting " + request.label + " into database")
+                for leader in modelData:
+                    # insert data into database.
+                    sqlQuery = '''insert into nhl_goaltending_savepct_leaders(rank,first_name,last_name,team_name,save_percentage,headshot_url,teamlogo_url)
+                                values(?,?,?,?,?,?,?)'''
+                    data = (leader.rank, leader.first_name, leader.last_name, leader.team_name, leader.save_percentage, leader.headshot_url, leader.teamlogo_url)
+                    request.dbCursor.execute(sqlQuery, data)
+                    self.debugPrint("Committing " + request.label + " to database")
+                    request.dbConn.commit()
+                return True
+          except Exception as e:
+                 self.debugPrint("save_nhl_goaltending_savepct_leaders_to_db - Error saving " + request.label + " to database: " + str(e))
+                 request.dbConn.rollback()
+                 self.debugPrint("Rolled back the transaction.")
+                 request.dbConn.close()
+                 self.debugPrint("Closed the database connection.")
+                 exit(1)
+      def process_nhl_goaltending_savepct_leaders(self)->bool:
+          try:
+                # create data table.
+                processRequest = data_request()
+                processRequest.dbCursor = self.dbCursor
+                processRequest.dbConn = self.dbConn
+                processRequest.label = "NHL Goaltending Save Percentage Leaders"
+                # create data table for nhl skating leaders.
+                self.create_nhl_goaltending_savepct_leaders_table(processRequest)
+                
+                # get json data from api.
+                processRequest.jsonData = self.get_nhl_goaltending_savepct_leaders_data()
+                
+                # clear existing data from database table.
+                self.clear_nhl_goaltending_savepct_leaders_table_from_db(processRequest)
+                
+                # compile data into list of nhl_skate_leader objects.
+                processRequest.entityData = self.compile_nhl_goaltending_savepct_leaders(processRequest)
+                
+                # save data to database. 
+                self.save_nhl_goaltending_savepct_leaders_to_db(processRequest)
+                return True
+          except Exception as e:
+                 self.debugPrint("process_nhl_goaltending_savepct_leaders - Error processing " + processRequest.label + ": " + str(e))
+                 return False
+      # End - Get NHL Goaltending Wins Leaders
+      #---------------------------------------------------
+      
+      #---------------------------------------------------
+      # Start - Get NHL Skate Goals Leaders
+      def create_nhl_skate_goal_leaders_table(self, request:data_request=None)->bool:
+            try:
+                self.debugPrint("Creating "+ request.label +" table in database")
+                query = '''
+                        CREATE TABLE IF NOT EXISTS nhl_skate_goal_leaders (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            rank integer not null,
+                            first_name text not null,
+                            last_name text not null,
+                            team_name text not null,
+                            goals integer not null,
+                            headshot_url text not null,
+                            teamlogo_url text not null,
+                            datecreated DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );
+                        '''
+                     # Execute the SQL command
+                request.dbCursor.execute(query)
+                # Commit the changes
+                request.dbConn.commit()
+                self.debugPrint(request.label +" table created in database successfully")
+                return True
+            except sqlite3.OperationalError:
+                     self.debugPrint("Error occurred while creating "+ request.label +" table.")
+                     request.dbConn.rollback()
+                     self.debugPrint("Rolled back the transaction.")
+                     request.dbConn.close()
+                     self.debugPrint("Closed the database connection.")
+                     return False
+      def get_nhl_skate_goal_leaders_data(self) ->any:
+          try:
+              self.debugPrint("Fetching data from API")
+              url = "https://api-web.nhle.com/v1/skater-stats-leaders/20252026/3?categories=goals&limit=5"
+              response = requests.get(url)
+              if response.status_code == 200:
+                  data = response.json()
+                  self.debugPrint("Data fetched from API successfully")
+                  return data
+              else:
+                  self.debugPrint(f"Error fetching NHL skate goal leaders: {response.status_code}")
+                  return None
+          except Exception as e:
+              self.debugPrint(f"Exception occurred while fetching NHL skate goal leaders: {e}")
+              return None
+      def compile_nhl_skate_goal_leaders(self, request:data_request=None)->list:
+          try:
+              self.debugPrint("Compiling data into list of "+ request.label)
+              jsonDataList = request.jsonData
+              retDataList = []
+              counter = 0
+              rows = len(jsonDataList['goals'])
+              self.debugPrint("Number of NHL skate goal leaders: "+str(rows))
+              for i in range(rows):
+                  leader = jsonDataList['goals'][i]
+                  nhlSkateGoalLeader = nhl_skate_goal_leader()
+                  nhlSkateGoalLeader.rank = i+1
+                  nhlSkateGoalLeader.first_name = leader['firstName']['default']
+                  nhlSkateGoalLeader.last_name = leader['lastName']['default']
+                  nhlSkateGoalLeader.team_name = leader['teamName']['default']
+                  nhlSkateGoalLeader.goals = leader['value']
+                  nhlSkateGoalLeader.headshot_url = leader['headshot']
+                  nhlSkateGoalLeader.teamlogo_url = leader['teamLogo']
+                  retDataList.append(nhlSkateGoalLeader)
+              self.debugPrint("Compiled " + request.label + " successfully")
+              return retDataList
+          except Exception as e:
+              self.debugPrint("compile_nhl_skate_goal_leaders - Error compiling " + request.label + ": " + str(e))
+              return []
+      def clear_nhl_skate_goal_leaders_table_from_db(self, request:data_request=None)->bool:
+          try:
+              self.debugPrint("Clearing " + request.label + " from database")
+              sqlQuery = '''delete from nhl_skate_goal_leaders'''
+              request.dbCursor.execute(sqlQuery)
+              request.dbConn.commit()
+              self.debugPrint(request.label + " cleared from database successfully")
+          except Exception as e:
+              self.debugPrint("Error clearing " + request.label + " from database: " + str(e))
+              self.debugPrint("Error saving " + request.label + " to database: " + str(e))
+              request.dbConn.rollback()
+              self.debugPrint("Rolled back the transaction.")
+              request.dbConn.close()
+              self.debugPrint("Closed the database connection.")
+              exit(1)
+      def save_nhl_skate_goal_leaders_to_db(self, request:data_request=None)->bool:
+          try:
+                modelData = request.entityData # self.compile_nhl_goaltending_wins_leaders()
+                self.debugPrint("Inserting " + request.label + " into database")
+                for leader in modelData:
+                    # insert data into database.
+                    sqlQuery = '''insert into nhl_skate_goal_leaders(rank,first_name,last_name,team_name,goals,headshot_url,teamlogo_url)
+                                values(?,?,?,?,?,?,?)'''
+                    data = (leader.rank, leader.first_name, leader.last_name, leader.team_name, leader.goals, leader.headshot_url, leader.teamlogo_url)
+                    request.dbCursor.execute(sqlQuery, data)
+                    self.debugPrint("Committing " + request.label + " to database")
+                    request.dbConn.commit()
+                return True
+          except Exception as e:
+                 self.debugPrint("save_nhl_skate_goal_leaders_to_db - Error saving " + request.label + " to database: " + str(e))
+                 request.dbConn.rollback()
+                 self.debugPrint("Rolled back the transaction.")
+                 request.dbConn.close()
+                 self.debugPrint("Closed the database connection.")
+                 exit(1)
+      def process_nhl_skate_goal_leaders(self)->bool:
+          try:
+                # create data table.
+                processRequest = data_request()
+                processRequest.dbCursor = self.dbCursor
+                processRequest.dbConn = self.dbConn
+                processRequest.label = "NHL Skate Goal Leaders"
+                # create data table for nhl skate goal leaders.
+                self.create_nhl_skate_goal_leaders_table(processRequest)
+                
+                # get json data from api.
+                processRequest.jsonData = self.get_nhl_skate_goal_leaders_data()
+                
+                # clear existing data from database table.
+                self.clear_nhl_skate_goal_leaders_table_from_db(processRequest)
+                
+                # compile data into list of nhl_skate_leader objects.
+                processRequest.entityData = self.compile_nhl_skate_goal_leaders(processRequest)
+                
+                # save data to database. 
+                self.save_nhl_skate_goal_leaders_to_db(processRequest)
+                return True
+          except Exception as e:
+                 self.debugPrint("process_nhl_skate_goal_leaders - Error processing " + processRequest.label + ": " + str(e))
+                 return False
+      # End - Get NHL Skate Goals Leaders
+      #---------------------------------------------------
       
       def save_nhl_teams_to_db(self, dbCursor, dbConnection):
             try:
