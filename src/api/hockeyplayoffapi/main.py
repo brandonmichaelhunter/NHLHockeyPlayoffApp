@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
+from .models.nhl_teams import nhl_teams
 print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get('DOCKER_ENV'):
    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
