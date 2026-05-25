@@ -11,9 +11,27 @@ from .models.data_request import data_request
 from .models.nhl_goaltending_gaa_leader import nhl_goaltending_gaa_leader
 from .models.nhl_goaltending_save_pct_leader import nhl_goaltending_save_pct_leader
 from .models.nhl_skate_goal_leader import nhl_skate_goal_leader
+import argparse
+from .services.nhl_etl_manager import nhl_etl_manager
+from .services.nhl_api_client import nhl_api_client
+from .services.nhl_db_manager import nhl_db_manager
 import os
 from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Notes:
+# - Team Roster URL - https://api-web.nhle.com/v1/roster/{team_abbrv}/current
+# - Team Info URL - https://api.nhle.com/stats/rest/en/team
+# - Player Info URL - https://api-web.nhle.com/v1/player/{playerId}/landing
+# - Game Boxscore URL - https://api-web.nhle.com/v1/player/{player}/game-log/{season}/{game-type}
+# - Seasons URL - https://api-web.nhle.com/v1/season
+# - Team Info URL - https://api-web.nhle.com/v1/standings/now
+# - Game Info URL - https://api.nhle.com/stats/rest/en/game
+
+# - Game Details URL - https://api-web.nhle.com/v1/score/2026-04-15
+# - Game Boxscore URL - https://api-web.nhle.com/v1/gamecenter/2025090030/boxscore
+# - All Game Details URL - https://api.nhle.com/stats/rest/en/game
+
 class NHLDataManager:
       dbConn = None
       dbCursor = None
@@ -29,6 +47,27 @@ class NHLDataManager:
             self.debugPrint("Creating database cursor object.")
             self.dbCursor = self.dbConn.cursor()
             self.debugPrint("Database cursor object created.")
+      
+      def run_nhl_etl_process(self,ProvisionTables:bool)->bool:
+          try:
+              db_connection = sqlite3.connect(self._dbFilePath)
+              # Initialize your managers
+              api_client = nhl_api_client()
+              db_manager = nhl_db_manager(self.dbConn)              
+              etl_manager = nhl_etl_manager(api_client, db_manager,True)
+              
+              if(ProvisionTables):
+                 etl_manager.provision_app_tables()
+              
+              etl_manager.run_data_extraction_process()
+              return True
+          except sqlite3.Error as e:
+                 print(f"Error connecting to database: {e}")
+                 # Handle the error appropriately, maybe exit or log
+                 exit()
+          except Exception as e:
+              self.debugPrint(f"Error occurred during data extraction process: {e}")
+              return None
       
       def debugPrint(self, message:str):
          if(self._debugEnabled):
@@ -86,8 +125,6 @@ class NHLDataManager:
             self.create_nhl_goalie_wins_leaders(DBCursor, DBConnection)
             self.create_nhl_schedule_games(DBCursor, DBConnection)
             self.create_nhl_teams_table(DBCursor, DBConnection)
-            
-      
       def create_nhl_teams_table(self, DBCursor, DBConnection):
             try:
               query = '''
@@ -111,8 +148,6 @@ class NHLDataManager:
               DBConnection.close()
               self.debugPrint("Closed the database connection.")
               return False
-      
-
       def create_nhl_goals_leaders(self, DBCursor, DBConnection):
             try:
               query = '''
@@ -1146,7 +1181,7 @@ class NHLDataManager:
               return False
 
 etl = NHLDataManager('./src/data/hockeyplayoffdb/hockeyplayoff.db', True)
-etl.run_data_extraction_process()
+etl.run_nhl_etl_process(True)
 db_path = Path(__file__).resolve().parent.parent.parent  / "api" / "hockeyplayoffapi" / "data" / "hockeyplayoff.db"
 etl.copy_db_file('./src/data/hockeyplayoffdb/hockeyplayoff.db', db_path)
     
