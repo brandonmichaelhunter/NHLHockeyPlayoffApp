@@ -1,0 +1,168 @@
+<!-- templates/nhlstats_leaders.html -->
+<div class="container">
+  <div class="row">
+    <h1>Skate Leaders</h1>
+    <div class="col-md-4">
+        <h2>Goal Leaders</h2>
+        <table class="table ">
+            <thead class="table_header" style="border-top-color:inherit !important;border-top-width: 1px !important;border-top-style: solid !important;">
+                <tr>
+                    <th style="text-align:left">Goals</th>
+                    <th>G</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in playerGoalRanks %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col-md-1">{{ player.league_ranking }}</div>
+                            <div class="col-md-1"><img src='{{player.player_headshot}}' class="" width="40" height="40" /></div>
+                            <div class="col-md-4">{{ player.player_firstname }} {{ player.player_lastname}}</div>
+                            <div class="col-md-1" style="color:gray">{{ player.team_abbrv }}</div>
+                        </div>
+                    </td>
+                    <td>{{ player.total_goals }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-4">
+        <h2>Plus/Minus Leaders</h2>
+        <table class="table ">
+            <thead class="table_header" style="border-top-color:inherit !important;border-top-width: 1px !important;border-top-style: solid !important;">
+                <tr>
+                    <th style="text-align:left">Plus/Minus</th>
+                    <th>+/-</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in playerPlusMinusRanks %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col-md-1">{{ player.league_ranking }}</div>
+                            <div class="col-md-1"><img src='{{player.player_headshot}}' class="" width="40" height="40" /></div>
+                            <div class="col-md-4">{{ player.player_firstname }} {{ player.player_lastname}}</div>
+                            <div class="col-md-1" style="color:gray">{{ player.team_abbrv }}</div>
+                        </div>
+                    </td>
+                    <td>{{ player.plus_minus }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-4">
+        <h2>Points Leaders</h2>
+        <table class="table ">
+            <thead class="table_header" style="border-top-color:inherit !important;border-top-width: 1px !important;border-top-style: solid !important;">
+                <tr>
+                    <th style="text-align:left">Points</th>
+                    <th>P</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in playerPointsRanks %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col-md-1">{{ player.league_ranking }}</div>
+                            <div class="col-md-1"><img src='{{player.player_headshot}}' class="" width="40" height="40" /></div>
+                            <div class="col-md-4">{{ player.player_firstname }} {{ player.player_lastname}}</div>
+                            <div class="col-md-1" style="color:gray">{{ player.team_abbrv }}</div>
+                        </div>
+                    </td>
+                    <td>{{ player.total_points }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+    <div class="row">
+    <!-- Goaltending Leaders-->
+     <h1>Goaltending Leaders</h1>
+     <div class="col-md-4">
+        <h2>Save Percentage Leaders</h2>
+        <table class="table ">
+            <thead class="table_header" style="border-top-color:inherit !important;border-top-width: 1px !important;border-top-style: solid !important;">
+                <tr>
+                    <th style="text-align:left">Save Percentage</th>
+                    <th>SV%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in goalSavePercentageRanks %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col-md-1">{{ player.league_ranking }}</div>
+                            <div class="col-md-1"><img src='{{player.player_headshot}}' class="" width="40" height="40" /></div>
+                            <div class="col-md-4">{{ player.player_firstname }} {{ player.player_lastname}}</div>
+                            <div class="col-md-1" style="color:gray">{{ player.team_abbrv }}</div>
+                        </div>
+                    </td>
+                    <td>{{ player.save_percentage }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Save Percentage -->
+     <div class="col-md-4">
+        <h2>GAA Leaders</h2>
+        <table class="table ">
+            <thead class="table_header" style="border-top-color:inherit !important;border-top-width: 1px !important;border-top-style: solid !important;">
+                <tr>
+                    <th style="text-align:left">GAA</th>
+                    <th>GAA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in playerPointsRanks1 %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col-md-1">{{ player.league_ranking }}</div>
+                            <div class="col-md-1"><img src='{{player.player_headshot}}' class="" width="40" height="40" /></div>
+                            <div class="col-md-4">{{ player.player_firstname }} {{ player.player_lastname}}</div>
+                            <div class="col-md-1" style="color:gray">{{ player.team_abbrv }}</div>
+                        </div>
+                    </td>
+                    <td>{{ player.total_points }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Wins -->
+        <div class="col-md-4">
+        <h2>Wins Leaders</h2>
+        <table class="table ">
+            <thead class="table_header" style="border-top-color:inherit !important;border-top-width: 1px !important;border-top-style: solid !important;">
+                <tr>
+                    <th style="text-align:left">Wins</th>
+                    <th>W</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in playerPointsRanks1 %}
+                <tr>
+                    <td>
+                        <div class="row">
+                            <div class="col-md-1">{{ player.league_ranking }}</div>
+                            <div class="col-md-1"><img src='{{player.player_headshot}}' class="" width="40" height="40" /></div>
+                            <div class="col-md-4">{{ player.player_firstname }} {{ player.player_lastname}}</div>
+                            <div class="col-md-1" style="color:gray">{{ player.team_abbrv }}</div>
+                        </div>
+                    </td>
+                    <td>{{ player.total_points }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+  </div>
+</div>

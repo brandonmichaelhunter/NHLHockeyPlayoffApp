@@ -1,0 +1,16 @@
+.team_images {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+.headshot_image {
+    
+    object-fit: cover;
+      /* Horizontal alignment */
+    vertical-align: top;    /* Optional: aligns content to the top of the cell */
+    /*padding: 10px;*/          /* Adds space inside the cell */
+}
+.table_header {
+
+    border-top-color:lightgray !important;border-top-width: 1px !important;border-top-style: solid !important;
+}
