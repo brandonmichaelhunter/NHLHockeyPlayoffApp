@@ -5,7 +5,7 @@ on:
       - beetle
     types:
       - opened
-      - synchronize
+      #- synchronize
   
 jobs:
   unit_tests:
