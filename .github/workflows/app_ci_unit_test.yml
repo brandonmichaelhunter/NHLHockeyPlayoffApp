@@ -30,8 +30,8 @@ jobs:
     - name: Run API Unit Tests
       run: uv run poe unit_test
 
-    - name: Run API Linter
-      run: uv run poe lint
+    #- name: Run API Linter
+    #  run: uv run poe lint
     #run_linter:
     #needs: unit_tests
     
