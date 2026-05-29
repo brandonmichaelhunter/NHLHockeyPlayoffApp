@@ -3,9 +3,13 @@ name: NHL Playoff App - FastAPI Docker Build and Push to Azure AKS
 
 # triggers
 on: 
-  push:
-    branches:
-      - beetle
+  workflow_run:
+    workflows: ["api integration test"]
+    types:
+      - completed
+  # push:
+  #   branches:
+  #     - beetle
 
 # Jobs
 jobs:
@@ -55,51 +59,51 @@ jobs:
         tags: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
     
 
-  unit-test-api:
-    needs: build-api-docker
-    runs-on: ubuntu-latest
-    environment: NHLHockeyAppEnv
-    permissions:
-      contents: read
-      packages: write
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-          python-version: '3.13'
+  # unit-test-api:
+  #   needs: build-api-docker
+  #   runs-on: ubuntu-latest
+  #   environment: NHLHockeyAppEnv
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #         python-version: '3.13'
       
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+  #   - name: Install uv
+  #     uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       
-    - name: Install UV dev dependencies
-      run: uv sync --locked && uv sync --all-extras --dev && uv tool install poethepoet
+  #   - name: Install UV dev dependencies
+  #     run: uv sync --locked && uv sync --all-extras --dev && uv tool install poethepoet
       
-    - name: Run API Unit Tests
-      run: poe unit_test
+  #   - name: Run API Unit Tests
+  #     run: poe unit_test
     
-  integration-test-api:
-    needs: unit-test-api
-    runs-on: ubuntu-latest
-    environment: NHLHockeyAppEnv
-    permissions:
-      contents: read
-      packages: write
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-          python-version: '3.13'
+  # integration-test-api:
+  #   needs: unit-test-api
+  #   runs-on: ubuntu-latest
+  #   environment: NHLHockeyAppEnv
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #         python-version: '3.13'
      
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+  #   - name: Install uv
+  #     uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       
-    - name: Install UV dev dependencies
-      run: uv sync --locked && uv sync --all-extras --dev && uv tool install poethepoet
+  #   - name: Install UV dev dependencies
+  #     run: uv sync --locked && uv sync --all-extras --dev && uv tool install poethepoet
       
-    - name: Run API Unit Tests
-      run: poe integration_test
+  #   - name: Run API Unit Tests
+  #     run: poe integration_test
       
   health-checker:
     needs: integration-test-api # This makes 'test' wait for 'build'
