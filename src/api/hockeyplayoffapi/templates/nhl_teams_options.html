@@ -1,0 +1,5 @@
+<!-- templates/nhl_teams_options.html -->
+ <option value="0">All Teams</option>
+{% for team in teams %}
+<option value="{{ team.id }}">{{ team.team_name }}</option>
+{% endfor %}
