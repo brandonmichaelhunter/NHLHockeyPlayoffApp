@@ -6,7 +6,6 @@ on:
       - completed
 jobs:
   integration-test-api:
-    needs: unit_tests
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
