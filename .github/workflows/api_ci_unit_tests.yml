@@ -1,0 +1,60 @@
+name: API CI - Unit Tests
+on:
+  workflow_run:
+    workflows: ["API Code Analyzer"]
+    types:
+      - completed
+#   pull_request:
+#     branches:
+#       - beetle
+#     types:
+#       - opened
+      #- synchronize
+env:
+  PYTHON_VERSION: '3.13'
+jobs:
+  rebuild-caches:
+    uses: ./.github/workflows/reusable-rebuild-caches.yaml
+    with:
+      install_dev_deps: true
+      python-version: 3.13
+
+  unit_tests:
+    needs: rebuild-caches
+    runs-on: ubuntu-latest
+    environment: NHLHockeyAppEnv
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+          python-version-file: "pyproject.toml"
+
+    - name: Run API Unit Tests
+      run: uv run poe unit_test
+
+    #- name: Run API Linter
+    #  run: uv run poe lint
+    #run_linter:
+    #needs: unit_tests
+
+    #runs-on: ubuntu-latest
+    #environment: NHLHockeyAppEnv
+    #permissions:
+    #  contents: read
+    #  packages: write
+    #steps:
+    # - uses: actions/checkout@v4
+    # - name: Set up Python
+    #   uses: actions/setup-python@v5
+    #   with:
+    #       python-version: '3.13'
+
+    # - name: Install uv
+    #   uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+    # - name: Install UV dev dependencies
+    #   run: uv sync --locked && uv sync --all-extras --dev && uv tool install poethepoet
