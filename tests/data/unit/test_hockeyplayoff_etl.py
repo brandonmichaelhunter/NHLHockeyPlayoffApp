@@ -9,14 +9,14 @@ def test_init_test_db():
     with patch('sqlite3.connect') as mock_connect:
          mockConn = MagicMock()
          mockCursor = MagicMock()
-         
+
          # configure return values
          mock_connect.return_value = mockConn
          mockConn.cursor.return_value = mockCursor
-         
+
          dbMgr = NHLDataManager('test_db.db', False)
-         
-         
+
+
          # asserts
          assert dbMgr.dbConn == mockConn
          assert dbMgr.dbCursor == mockCursor

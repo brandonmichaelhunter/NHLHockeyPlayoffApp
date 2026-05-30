@@ -4,11 +4,11 @@
   - An ETL that extracts NHL Hockey Games, Stats and Schedule data from an API into a Sqlite database.
 
 # Install uv
- - What is uv? 
+ - What is uv?
    - Uv a Python package and project manager writen in Rust.
    - This tool replaces pip, pipx, poetry, and virtualenv with a single tool.
  - Install uv:
-   - ```curl -LsSf https://uv.eustace.io/install.sh | sh``` 
+   - ```curl -LsSf https://uv.eustace.io/install.sh | sh```
  - Verify installation: ```uv --version```
  - Tools
    - What are tools?
@@ -22,7 +22,7 @@
   - uv add sqlmodel
 
 # How to run API and ETL apps locally
-## Activate the virtual environment: 
+## Activate the virtual environment:
   - ```source .venv/Scripts/activate```
 ## How to run FastAPI app locally:
   - Activate the virtual environment: ```source .venv/Scripts/activate```
@@ -32,7 +32,7 @@
   - Activate the virtual environment: ```source .venv/Scripts/activate```
   - ```cd NHLHockeyPlayoffApp``` to get to the root of the project
   - ```uv run poe run_etl``` to run the ETL locally
-  
+
 # Testing
 - How to run tests:
   - ```cd NHLHockeyPlayoffApp ``` to get to the root of the project
@@ -53,4 +53,3 @@
   - ```uv run poe docker_build ``` to build the docker image locally
 - How to run a docker container locally
   - ```uv run poe docker_run ``` to run the docker container locally
-

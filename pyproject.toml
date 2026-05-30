@@ -77,14 +77,14 @@ lint = [
 ]
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]
-pythonpath= [".", 
+pythonpath= [".",
              "src",
              "tests",
              "tests/api",
-             "tests/api/unit", 
+             "tests/api/unit",
              "tests/api/integration",
-             "tests/data/", 
-             "tests/data/integration", 
+             "tests/data/",
+             "tests/data/integration",
              "tests/data/unit",
              ]
 markers = [
@@ -111,3 +111,4 @@ run_etl= "python -m src.data.hockeyplayoffetl.hockeyplayoff_etl"
 docker_build = "docker build -f 'src/Dockerfile' -t hockeyplayoff:latest ."
 docker_run = "docker run -p 8000:8000 hockeyplayoff:latest"
 install_project = "uv sync --locked"
+pre_commit_all_files = "pre-commit run --all-files"

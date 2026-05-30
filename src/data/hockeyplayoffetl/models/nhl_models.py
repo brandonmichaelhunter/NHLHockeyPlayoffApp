@@ -82,7 +82,7 @@ class teamroster:
     endDate:str
     jerseyNumber:str
     position:str
-    
+
 @dataclass
 class nhl_team:
     id:int
@@ -93,7 +93,7 @@ class nhl_team:
     city:str
     state:str
     country:str
-    
+
 class DynamicObject:
       def __init__(self, **kwargs):
           for key, value in kwargs.items():

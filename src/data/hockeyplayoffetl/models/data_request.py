@@ -9,4 +9,3 @@ class data_request:
     jsonData:object=None
     entityData:object=None
     label:str=""
-    
