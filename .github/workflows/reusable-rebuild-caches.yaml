@@ -1,0 +1,41 @@
+name: Reusable Rebuild Caches
+on:
+    workflow_call:
+        inputs:
+            cache_precommit:
+                required: true
+                type: boolean
+                default: true
+
+permissions:
+    contents: read
+
+jobs:
+  rebuild-caches:
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+      #- name: Checkout code
+        uses: actions/checkout@v3
+      - id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - id: install-uv-tools
+        if: ${{ inputs.cache_precommit }}
+        name: Install uv and pre-commit tools
+        run: |
+         uv tool install pre-commit --with pre-commit-uv
+
+      - id: pre-commit
+        if: ${{ inputs.cache_precommit }}
+        name: Run pre-commit checks
+        run: uv run pre-commit install-hooks
+
+      - id: save-pre-commit-cache
+        if: ${{ inputs.cache_precommit }}
+        name: Save pre-commit cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}

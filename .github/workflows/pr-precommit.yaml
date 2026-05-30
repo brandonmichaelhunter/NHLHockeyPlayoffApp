@@ -1,0 +1,67 @@
+name: PR Pre-commit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  rebuild-caches:
+    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
+    with:
+      cache_precommit: true
+
+  pre-commit:
+    name: Run pre-commit and comment on failure
+    needs: rebuild-caches
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.14"
+
+      - name: Run pre-commit
+        id: precommit
+        shell: bash
+        run: |
+          set +e
+          uv run pre-commit run --all-files 2>&1 | tee precommit-output.txt
+          exit_code=${PIPESTATUS[0]}
+          {
+            echo "exit_code=$exit_code"
+            echo "output<<EOF"
+            cat precommit-output.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          exit "$exit_code"
+
+      - name: Comment on PR if pre-commit failed
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          PRECOMMIT_OUTPUT: ${{ steps.precommit.outputs.output }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = [
+              "## pre-commit failed",
+              "",
+              "```text",
+              (process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured").slice(0, 60000),
+              "```"
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });

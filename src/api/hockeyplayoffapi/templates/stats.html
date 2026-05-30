@@ -34,37 +34,37 @@
         </div>
         <div id="nhlscorestablessection" class="container-fluid">
             <div id="dateselect">
-                
+
                 <!-- Add NHL Teams Select List.-->
-                 <select id="nhlTeams" 
-                         name="teams" 
-                         hx-get="/get_nhl_teams" 
-                         hx-trigger="load" 
-                         hx-target="this" 
+                 <select id="nhlTeams"
+                         name="teams"
+                         hx-get="/get_nhl_teams"
+                         hx-trigger="load"
+                         hx-target="this"
                          hx-swap="innerHTML">
-                      
-                 </select>  
+
+                 </select>
             </div>
-            <div id="nhlscorestable" 
-                 class="container-fluid" 
-                 id="nhlScores" 
-                 name="stats" 
-                 hx-get="/get_nhl_stats" 
+            <div id="nhlscorestable"
+                 class="container-fluid"
+                 id="nhlScores"
+                 name="stats"
+                 hx-get="/get_nhl_stats"
                  hx-trigger="load, htmx:afterSwap from:#nhlTeams, change from:#nhlTeams"
                  hx-target="#nhlstatscontainer"
                  hx-swap="innerHTML"
                  hx-include="#nhlTeams">
                 <div class="row" id="nhlstatscontainer">
-                    
+
                 </div>
-                
+
             </div>
         </div>
     </div>
-   
-         
-    
-  
+
+
+
+
     <!-- <script src="https://jsdelivr.net" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script> -->
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', () => {

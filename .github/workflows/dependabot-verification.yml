@@ -1,5 +1,5 @@
 # Name: CI verification workflow for Dependabot PRs
-# Description: 
+# Description:
 # - Designed for repositories using GitHub's multi-ecosystem grouping.
 # - Triggers automiatically whenever Dependabot opens or updates a PR.
 # - The workflow includes two jobs: one for verifying Python dependencies and lockfile integrity, and another for validating Docker builds.

@@ -34,7 +34,7 @@ async def test_nhl_scores_returns_json_without_hx_header():
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_template_with_hx_header():
-    
+
     # Mock the nhl_scores fake data.
     fake_scores = [{"date": "2024-05-01", "home_team": "A", "away_team": "B"}]
     # Mock the database session.
@@ -45,12 +45,12 @@ async def test_nhl_scores_returns_template_with_hx_header():
     # Override the get_session dependency to return our mock session.
     def override_get_session():
         yield mock_session
-        
+
     # Overriding the Session dependency in the FastAPI app to use our mock session.
     main_module.app.dependency_overrides[main_module.get_session] = override_get_session
 
     try:
-        # 
+        #
         with patch.object(
             main_module.templates,
             "TemplateResponse",
@@ -73,14 +73,14 @@ async def test_nhl_scores_returns_template_with_hx_header():
         main_module.app.dependency_overrides.clear()
 
 
-            
+
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_root():
     # Use ASGITransport to connect the client directly to the FastAPI app
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.get("/appname")
-    
+
     assert response.status_code == 200
     assert response.json() == {"app_name": "Hockey Playoff API"}
 
@@ -88,7 +88,7 @@ async def test_root():
 async def test_health_live():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.get("/health/live")
-        
+
     assert response.status_code == 200
     assert response.json() == {"status": "alive"}
 

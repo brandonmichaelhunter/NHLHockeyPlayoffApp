@@ -4,7 +4,7 @@ from datetime import datetime, timedelta,date
 
 from sqlmodel import true
 from src.data.hockeyplayoffetl.models.nhl_goaltending_win_leader import nhl_goaltending_win_leader
-from src.data.hockeyplayoffetl.models.nhl_score import nhl_score 
+from src.data.hockeyplayoffetl.models.nhl_score import nhl_score
 from .models.nhl_team import nhl_score
 from .models.nhl_skate_leaders import nhl_skate_leader
 from .models.data_request import data_request
@@ -47,18 +47,18 @@ class NHLDataManager:
             self.debugPrint("Creating database cursor object.")
             self.dbCursor = self.dbConn.cursor()
             self.debugPrint("Database cursor object created.")
-      
+
       def run_nhl_etl_process(self,ProvisionTables:bool)->bool:
           try:
               db_connection = sqlite3.connect(self._dbFilePath)
               # Initialize your managers
               api_client = nhl_api_client()
-              db_manager = nhl_db_manager(self.dbConn)              
+              db_manager = nhl_db_manager(self.dbConn)
               etl_manager = nhl_etl_manager(api_client, db_manager,True)
-              
+
               if(ProvisionTables):
                  etl_manager.provision_app_tables()
-              
+
               etl_manager.run_data_extraction_process()
               return True
           except sqlite3.Error as e:
@@ -68,7 +68,7 @@ class NHLDataManager:
           except Exception as e:
               self.debugPrint(f"Error occurred during data extraction process: {e}")
               return None
-      
+
       def debugPrint(self, message:str):
          if(self._debugEnabled):
             print(message)
@@ -87,23 +87,23 @@ class NHLDataManager:
               self.debugPrint("Saving NHL Teams to database.")
               self.save_nhl_teams_to_db(self.dbCursor, self.dbConn)
               self.debugPrint("Saving NHL Teams to database complete.")
-              
+
               self.debugPrint("Getting NHL Skater Leaders and saving to database.")
               self.process_nhl_skater_leaders()
               self.debugPrint("Getting NHL Skater Leaders and saving to database complete.")
-              
+
               self.debugPrint("Getting NHL Goaltending GAA Leaders and saving to database.")
               self.process_nhl_goaltending_gaa_leaders()
               self.debugPrint("Getting NHL Goaltending GAA Leaders and saving to database complete.")
-              
+
               self.debugPrint("Getting NHL Goaltending Wins Leaders and saving to database.")
               self.process_nhl_goaltending_wins_leaders()
               self.debugPrint("Getting NHL Goaltending Wins Leaders and saving to database complete.")
-              
+
               self.debugPrint("Getting NHL Goaltending Save Percentage Leaders and saving to database.")
               self.process_nhl_goaltending_savepct_leaders()
               self.debugPrint("Getting NHL Goaltending Save Percentage Leaders and saving to database complete.")
-              
+
               self.debugPrint("Getting NHL Skate Goal Leaders and saving to database.")
               self.process_nhl_skate_goal_leaders()
               self.debugPrint("Getting NHL Skate Goal Leaders and saving to database complete.")
@@ -268,7 +268,7 @@ class NHLDataManager:
               self.debugPrint("Rolled back the transaction.")
               DBConnection.close()
               self.debugPrint("Closed the database connection.")
-              return False    
+              return False
       def get_nhl_playoff_game_dates(self):
             #Target end date (inclusive)
             target_date = date(2026, 4, 18)
@@ -291,10 +291,10 @@ class NHLDataManager:
             # for d in date_list:
             #     print(d)
             self.debugPrint(date_list)
-            return date_list    
-      
-      #---------------------------------------------------  
-      # Start - Get NHL Scores  
+            return date_list
+
+      #---------------------------------------------------
+      # Start - Get NHL Scores
       def create_nhl_scores_table(self, DBCursor, DBConnection):
             try:
               query = '''
@@ -364,17 +364,17 @@ class NHLDataManager:
                     game_score.home_team_image = results['games'][i]['homeTeam']['logo']
                     game_score.away_team = results['games'][i]['awayTeam']['name']['default']
                     game_score.away_team_image = results['games'][i]['awayTeam']['logo']
-                    
+
                     if('score' in results['games'][i]['homeTeam']):
                         game_score.home_score = results['games'][i]['homeTeam']['score']
                     else:
                         game_score.home_score = 0
-                    
+
                     if('score' in results['games'][i]['awayTeam']):
                         game_score.away_score = results['games'][i]['awayTeam']['score']
                     else:
                         game_score.away_score = 0
-                    
+
                     # Series info
                     game_score.round = results['games'][i]['seriesStatus']['round']
                     game_score.game_number = results['games'][i]['seriesStatus']['gameNumberOfSeries']
@@ -396,7 +396,7 @@ class NHLDataManager:
                         game_score.series_info = ""+bottomSeedName+" leads series "+str(bottomSeedWins)+"-"+str(topSeedWins)+""
                     elif(topSeedWins == bottomSeedWins):
                             game_score.series_info = "Series is tied "+str(topSeedWins)+"-"+str(bottomSeedWins)+""
-                    
+
                     # game_score.away_score = results['games'][i]['awayTeam']['score']
                     goalsCount = len(results['games'][i]['goals'])
                     game_score.first_period_home_score = 0
@@ -414,23 +414,23 @@ class NHLDataManager:
                         awayTeamAbbrv = results['games'][i]['awayTeam']['abbrev']
                         if (period== 1):
                             if(homeTeamAbbrv == goalItem['teamAbbrev']):
-                               game_score.first_period_home_score += 1    
+                               game_score.first_period_home_score += 1
                             elif(awayTeamAbbrv == goalItem['teamAbbrev']):
                                  game_score.first_period_away_score += 1
                         elif (period== 2):
                             if(homeTeamAbbrv == goalItem['teamAbbrev']):
-                                game_score.second_period_home_score += 1    
+                                game_score.second_period_home_score += 1
                             elif(awayTeamAbbrv == goalItem['teamAbbrev']):
                                 game_score.second_period_away_score += 1
-                            
+
                         elif (period== 3):
                             if(homeTeamAbbrv == goalItem['teamAbbrev']):
-                                game_score.third_period_home_score += 1    
+                                game_score.third_period_home_score += 1
                             elif(awayTeamAbbrv == goalItem['teamAbbrev']):
                                 game_score.third_period_away_score += 1
                         elif (period== 4):
                             if(homeTeamAbbrv == goalItem['teamAbbrev']):
-                                game_score.overtime_home_score += 1    
+                                game_score.overtime_home_score += 1
                             elif(awayTeamAbbrv == goalItem['teamAbbrev']):
                                 game_score.overtime_away_score += 1
                     game_score.final_home_score = results['games'][i]['homeTeam']['score']
@@ -458,11 +458,11 @@ class NHLDataManager:
                                               final_home_score,first_period_away_score,second_period_away_score,third_period_away_score,
                                               overtime_away_score,final_away_score,round,game_number,series_info)
                               values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
-                  data = (score.game_date, score.home_team, score.home_team_image, score.away_team, score.away_team_image, score.home_score, score.away_score, 
-                          score.first_period_home_score, score.second_period_home_score, score.third_period_home_score, score.overtime_home_score, score.final_home_score, 
-                          score.first_period_away_score, score.second_period_away_score, score.third_period_away_score, score.overtime_away_score, score.final_away_score, 
+                  data = (score.game_date, score.home_team, score.home_team_image, score.away_team, score.away_team_image, score.home_score, score.away_score,
+                          score.first_period_home_score, score.second_period_home_score, score.third_period_home_score, score.overtime_home_score, score.final_home_score,
+                          score.first_period_away_score, score.second_period_away_score, score.third_period_away_score, score.overtime_away_score, score.final_away_score,
                           score.round, score.game_number, score.series_info)
-                  
+
                   dbCursor.execute(sqlQuery, data)
                   self.debugPrint("Commiting NHL Scores to database")
                   dbConnection.commit()
@@ -475,9 +475,9 @@ class NHLDataManager:
                  dbConnection.close()
                  self.debugPrint("Closed the database connection.")
                  return False
-      # End - Get NHL Scores  
+      # End - Get NHL Scores
       #---------------------------------------------------
-      
+
       #---------------------------------------------------
       # Start - Get NHL Skater Leaders
       def process_nhl_skater_leaders(self):
@@ -486,20 +486,20 @@ class NHLDataManager:
                 processRequest = data_request()
                 processRequest.dbCursor = self.dbCursor
                 processRequest.dbConn = self.dbConn
-                
+
                 # create data table for nhl skating leaders.
                 self.create_nhl_skating_leaders(processRequest)
-                
+
                 # get json data from api.
                 processRequest.jsonData = self.get_nhl_skater_leaders()
-                
+
                 # clear existing data from database table.
                 self.clear_nhl_skater_leaders_table_from_db(processRequest)
-                
+
                 # compile data into list of nhl_skate_leader objects.
                 processRequest.entityData = self.compile_nhl_skater_leaders(processRequest)
-                
-                # save data to database. 
+
+                # save data to database.
                 self.save_nhl_skater_leaders_to_db(processRequest)
                 return True
             except Exception as e:
@@ -581,10 +581,10 @@ class NHLDataManager:
               self.debugPrint("Rolled back the transaction.")
               request.dbConn.close()
               self.debugPrint("Closed the database connection.")
-              exit(1)     
+              exit(1)
       def save_nhl_skater_leaders_to_db(self, request:data_request=None):
             try:
-                
+
                 nhlSkateLeaders = request.entityData # self.compile_nhl_skater_leaders()
                 self.debugPrint("Insert NHL Skater Leaders into database")
                 for leader in nhlSkateLeaders:
@@ -603,7 +603,7 @@ class NHLDataManager:
                      request.dbConn.close()
                      self.debugPrint("Closed the database connection.")
                      exit(1)
-      # End - Get NHL Skater Leaders        
+      # End - Get NHL Skater Leaders
       #---------------------------------------------------
       #---------------------------------------------------
       # Start - Get NHL Goaltending GAA Leaders
@@ -689,7 +689,7 @@ class NHLDataManager:
               self.debugPrint("Rolled back the transaction.")
               request.dbConn.close()
               self.debugPrint("Closed the database connection.")
-              exit(1) 
+              exit(1)
       def save_nhl_goaltending_gaa_leaders_to_db(self, request:data_request=None)->bool:
           try:
                 modelData = request.entityData # self.compile_nhl_goaltending_gaa_leaders()
@@ -719,17 +719,17 @@ class NHLDataManager:
                 processRequest.label = "NHL Goaltending GAA Leaders"
                 # create data table for nhl skating leaders.
                 self.create_nhl_goaltending_gaa_leaders_table(processRequest)
-                
+
                 # get json data from api.
                 processRequest.jsonData = self.get_nhl_goaltending_gaa_leaders_data()
-                
+
                 # clear existing data from database table.
                 self.clear_nhl_goaltending_gaa_leaders_table_from_db(processRequest)
-                
+
                 # compile data into list of nhl_skate_leader objects.
                 processRequest.entityData = self.compile_nhl_goaltending_gaa_leaders(processRequest)
-                
-                # save data to database. 
+
+                # save data to database.
                 self.save_nhl_goaltending_gaa_leaders_to_db(processRequest)
                 return True
           except Exception as e:
@@ -737,7 +737,7 @@ class NHLDataManager:
                  return False
       # End - Get NHL Goaltending GAA Leaders
       #---------------------------------------------------
-      
+
       #---------------------------------------------------
       # Start - Get NHL Goaltending Wins Leaders
       def create_nhl_goaltending_wins_leaders_table(self, request:data_request=None)->bool:
@@ -852,17 +852,17 @@ class NHLDataManager:
                 processRequest.label = "NHL Goaltending Wins Leaders"
                 # create data table for nhl skating leaders.
                 self.create_nhl_goaltending_wins_leaders_table(processRequest)
-                
+
                 # get json data from api.
                 processRequest.jsonData = self.get_nhl_goaltending_wins_leaders_data()
-                
+
                 # clear existing data from database table.
                 self.clear_nhl_goaltending_wins_leaders_table_from_db(processRequest)
-                
+
                 # compile data into list of nhl_skate_leader objects.
                 processRequest.entityData = self.compile_nhl_goaltending_wins_leaders(processRequest)
-                
-                # save data to database. 
+
+                # save data to database.
                 self.save_nhl_goaltending_wins_leaders_to_db(processRequest)
                 return True
           except Exception as e:
@@ -870,7 +870,7 @@ class NHLDataManager:
                  return False
       # End - Get NHL Goaltending Wins Leaders
       #---------------------------------------------------
-      
+
       #---------------------------------------------------
       # Start - Get NHL Goaltending Wins Leaders
       def create_nhl_goaltending_savepct_leaders_table(self, request:data_request=None)->bool:
@@ -985,17 +985,17 @@ class NHLDataManager:
                 processRequest.label = "NHL Goaltending Save Percentage Leaders"
                 # create data table for nhl skating leaders.
                 self.create_nhl_goaltending_savepct_leaders_table(processRequest)
-                
+
                 # get json data from api.
                 processRequest.jsonData = self.get_nhl_goaltending_savepct_leaders_data()
-                
+
                 # clear existing data from database table.
                 self.clear_nhl_goaltending_savepct_leaders_table_from_db(processRequest)
-                
+
                 # compile data into list of nhl_skate_leader objects.
                 processRequest.entityData = self.compile_nhl_goaltending_savepct_leaders(processRequest)
-                
-                # save data to database. 
+
+                # save data to database.
                 self.save_nhl_goaltending_savepct_leaders_to_db(processRequest)
                 return True
           except Exception as e:
@@ -1003,7 +1003,7 @@ class NHLDataManager:
                  return False
       # End - Get NHL Goaltending Wins Leaders
       #---------------------------------------------------
-      
+
       #---------------------------------------------------
       # Start - Get NHL Skate Goals Leaders
       def create_nhl_skate_goal_leaders_table(self, request:data_request=None)->bool:
@@ -1118,17 +1118,17 @@ class NHLDataManager:
                 processRequest.label = "NHL Skate Goal Leaders"
                 # create data table for nhl skate goal leaders.
                 self.create_nhl_skate_goal_leaders_table(processRequest)
-                
+
                 # get json data from api.
                 processRequest.jsonData = self.get_nhl_skate_goal_leaders_data()
-                
+
                 # clear existing data from database table.
                 self.clear_nhl_skate_goal_leaders_table_from_db(processRequest)
-                
+
                 # compile data into list of nhl_skate_leader objects.
                 processRequest.entityData = self.compile_nhl_skate_goal_leaders(processRequest)
-                
-                # save data to database. 
+
+                # save data to database.
                 self.save_nhl_skate_goal_leaders_to_db(processRequest)
                 return True
           except Exception as e:
@@ -1136,7 +1136,7 @@ class NHLDataManager:
                  return False
       # End - Get NHL Skate Goals Leaders
       #---------------------------------------------------
-      
+
       def save_nhl_teams_to_db(self, dbCursor, dbConnection):
             try:
                 self.debugPrint("Saving NHL Teams to database")
@@ -1144,7 +1144,7 @@ class NHLDataManager:
                 dbCursor.execute(sqlQuery)
                 dbConnection.commit()
                 sqlQuery = '''
-                    insert into nhl_teams(team_name, active) 
+                    insert into nhl_teams(team_name, active)
                     select distinct a.team,1
                     from (
                           select home_team as team from nhl_scores
@@ -1184,4 +1184,3 @@ etl = NHLDataManager('./src/data/hockeyplayoffdb/hockeyplayoff.db', True)
 etl.run_nhl_etl_process(True)
 db_path = Path(__file__).resolve().parent.parent.parent  / "api" / "hockeyplayoffapi" / "data" / "hockeyplayoff.db"
 etl.copy_db_file('./src/data/hockeyplayoffdb/hockeyplayoff.db', db_path)
-    

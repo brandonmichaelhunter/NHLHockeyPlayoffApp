@@ -2,7 +2,7 @@ version: 2
 multi-ecosystem-groups:
   app-stack:
     interval: "weekly"
-updates: 
+updates:
   - package-ecosystem: "uv"
     directory: "/"
     schedule:

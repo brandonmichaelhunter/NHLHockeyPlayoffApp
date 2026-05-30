@@ -20,7 +20,7 @@ class nhl_etl_manager:
         self._dbManager = dbManager
         self._logWrapper = utility_manager("nhl_etl_manager","nhl_etl_manager.log",10,self._displayConsoleLogs)
         self._log = self._logWrapper.get_logger()
-        
+
     def provision_app_tables(self):
         try:
             query_methods = [
@@ -37,7 +37,7 @@ class nhl_etl_manager:
                 query = method()
                 table_name = method.__name__.replace('__get_', '').replace('_query', '')
                 self._log.info(f"Creating table: {table_name}...")
-            
+
                 result = self._dbManager.execute_query(query)
                 if not result:
                     self._log.error(f"Failed to create table: {table_name}")
@@ -45,11 +45,11 @@ class nhl_etl_manager:
                 else:
                     self._log.info(f"Table '{table_name}' created successfully or already exists.")
 
-            
+
         except Exception as e:
             self._log.error(f"provision_app_tables: An error occurred while provisioning app tables: {e}")
-            raise Exception(f"An error occurred while provisioning app tables: {e}")    
-    
+            raise Exception(f"An error occurred while provisioning app tables: {e}")
+
     #---------------------------------
     def __get_teams_query(self) -> str:
 
@@ -78,7 +78,7 @@ class nhl_etl_manager:
                 start_date                   DateTime NULL    ,
                 end_date                     DateTime NULL    ,
                 jersey_number                integer  NULL    ,
-                position                     text     NULL 
+                position                     text     NULL
             );
         '''
         return query
@@ -111,7 +111,7 @@ class nhl_etl_manager:
             total_penalities_minutes integer NULL    ,
             PRIMARY KEY (id AUTOINCREMENT)
             );
-            '''        
+            '''
         return query
     def __get_player_game_stats_query(self) -> str:
         query = '''
@@ -146,7 +146,7 @@ class nhl_etl_manager:
                 toi text NULL,
                 PRIMARY KEY (id AUTOINCREMENT)
             );
-            '''        
+            '''
         return query
     def __get_games_query(self) -> str:
         query = '''
@@ -172,7 +172,7 @@ class nhl_etl_manager:
         '''
         return query
     def __get_players_query(self) -> str:
-        query = ''' 
+        query = '''
             CREATE TABLE IF NOT EXISTS players
             (
                 id           INTEGER  NOT NULL,
@@ -181,8 +181,8 @@ class nhl_etl_manager:
                 last_name    TEXT    NULL    ,
                 age          integer NULL    ,
                 birth_place  Text    NULL    ,
-                headshot_url Text    NULL    
-                
+                headshot_url Text    NULL
+
             );
         '''
         return query
@@ -192,7 +192,7 @@ class nhl_etl_manager:
             (
                 id                integer NOT NULL,
                 start_season_year integer NULL    ,
-                end_season_year   integer NULL 
+                end_season_year   integer NULL
             );
         '''
         return query
@@ -205,12 +205,12 @@ class nhl_etl_manager:
             api_urls.append(api_url_request(function_name="player_info", endpoint_url="v1/player/{player_id}/landing"))
             api_urls.append(api_url_request(function_name="game_box_score", endpoint_url="v1/player/{player}/game-log/{season}/{game_type}"))
             api_urls.append(api_url_request(function_name="seasons", endpoint_url="v1/season"))
- 
+
             return api_urls
         except Exception as e:
             self._log.error(f"register_api_urls: An error occurred while registering API URLs: {e}")
             raise Exception(f"An error occurred while registering API URLs: {e}")
-    
+
     def run_data_extraction_process(self):
         try:
             #self.run_seasons_pipeline()
@@ -223,18 +223,18 @@ class nhl_etl_manager:
             self._log.error(f"run_data_extraction_process: An error occurred while running the data extraction process: {e}")
             raise Exception(f"An error occurred while running the data extraction process: {e}")
     # ---------------------------------
-    # Seasons Pipeline     
+    # Seasons Pipeline
     def run_seasons_pipeline(self):
         try:
             # extract season data from NHL API
             jsonData = self.extract_seasons_info()
-            
+
             # transform json data into list of models
             models = self.transform_seasons_info(jsonData)
-            
+
             # save model data to database
             self.load_seasons_info(models)
-            
+
         except Exception as e:
             self._log.error(f"run_seasons_pipeline: An error occurred while running the seasons pipeline: {e}")
             raise Exception(f"An error occurred while running the seasons pipeline: {e}")
@@ -282,27 +282,27 @@ class nhl_etl_manager:
         try:
             # extract team data from NHL API
             jsonData = self.extract_teams_info()
-            
+
             jsonTeamsFranchiseData = self.extract_team_franchise_info()
-            
+
             # transform json data into list of models
             models = self.transform_teams_info(jsonData, jsonTeamsFranchiseData)
-            
+
             # save model data to database
             self.load_teams_info(models)
-            
+
         except Exception as e:
             self._log.error(f"run_teams_pipeline: An error occurred while running the teams pipeline: {e}")
             raise Exception(f"An error occurred while running the teams pipeline: {e}")
-    
+
     def extract_teams_info(self) -> list:
         try:
             extracted_data = self._apiClient.fetch_nhl_data_with_url("https://api.nhle.com/stats/rest/en/team")
             return extracted_data
         except Exception as e:
             self._log.error(f"extract_teams_info: An error occurred while extracting teams info: {e}")
-            raise Exception(f"An error occurred while extracting teams info: {e}")    
-    
+            raise Exception(f"An error occurred while extracting teams info: {e}")
+
     def extract_team_franchise_info(self) -> list:
         try:
             extracted_data = self._apiClient.fetch_nhl_data_with_url("https://api.nhle.com/stats/rest/en/franchise")
@@ -310,7 +310,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"extract_team_franchise_info: An error occurred while extracting team franchise info: {e}")
             raise Exception(f"An error occurred while extracting team franchise info: {e}")
-        
+
     def transform_teams_info(self, teamData: list, franchiseData: list) -> list:
         try:
             playoff_teams =self._dbManager.execute_fetch("SELECT team_name FROM nhl_teams;")
@@ -320,13 +320,13 @@ class nhl_etl_manager:
                     franchise_id = item['id']
                     if(item['teamCommonName'] == playoff_team[0] ):
                         playoff_francise_teams.append(item)
-            
+
             transformed_data = []
             for playoff_franchise_team in playoff_francise_teams:
                 franchise_team_id = playoff_franchise_team['id']
-                for item in teamData['data']:    
-                    if franchise_team_id == item['franchiseId'] and (item['fullName'] != "Quebec Nordiques" and 
-                                                                      item['fullName'] != "Hartford Whalers" and 
+                for item in teamData['data']:
+                    if franchise_team_id == item['franchiseId'] and (item['fullName'] != "Quebec Nordiques" and
+                                                                      item['fullName'] != "Hartford Whalers" and
                                                                       item['fullName'] != "Minnesota North Stars" and
                                                                       item['fullName'] != "Utah Hockey Club"):
                        id = item['id']
@@ -343,7 +343,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"transform_teams_info: An error occurred while transforming teams info: {e}")
             raise Exception(f"An error occurred while transforming teams info: {e}")
-    
+
     def load_teams_info(self, transformedData: list):
         try:
             self.clear_table("teams")
@@ -374,18 +374,18 @@ class nhl_etl_manager:
                 json_TeamRoster:list = self.extract_team_roster_info(team[0])
                 teamRosterData = DynamicObject(abbrv=team[0], id=team[1], roster=json_TeamRoster)
                 teamsRosters.append(teamRosterData)
-            
+
             # transform json data into list of models
             models = self.transform_team_roster_info(teamsRosters)
-            
+
             # save model data to database
             self.load_team_roster_info(models['teamPlayers'])
             self.load_players_info(models['players'])
-            
+
         except Exception as e:
             self._log.error(f"run_team_roster_pipeline: An error occurred while running the team roster pipeline: {e}")
             raise Exception(f"An error occurred while running the team roster pipeline: {e}")
-    
+
     def load_team_roster_info(self, transformedData: list):
         try:
             self.clear_table("team_roster")
@@ -404,7 +404,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"load_team_roster_info: An error occurred while loading team roster info: {e}")
             raise Exception(f"An error occurred while loading team roster info: {e}")
-        
+
     def load_players_info(self, transformedData: list):
         try:
             self.clear_table("players")
@@ -423,7 +423,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"load_players_info: An error occurred while loading players info: {e}")
             raise Exception(f"An error occurred while loading players info: {e}")
-    
+
     def extract_team_roster_info(self, team_abbrv: str) -> list:
         try:
             extracted_data = self._apiClient.fetch_nhl_data(api_url_request(function_name="team_roster", endpoint_url=f"v1/roster/{team_abbrv}/current").endpoint_url)
@@ -440,7 +440,7 @@ class nhl_etl_manager:
             for teamRoster in teamsRosters:
                 teamID = teamRoster.id
                 for playerRoster in teamRoster.roster['forwards']:
-                    
+
                     playerID = playerRoster['id']
                     first_name = playerRoster['firstName']['default']
                     last_name = playerRoster['lastName']['default']
@@ -457,7 +457,7 @@ class nhl_etl_manager:
                     players.append(playerModel)
                     teamPlayerModel = teamroster(None, teamID, playerID, None, None, jerseyNumber, position)
                     teamPlayers.append(teamPlayerModel)
-                
+
                 for playerRoster in teamRoster.roster['defensemen']:
                     playerID = playerRoster['id']
                     first_name = playerRoster['firstName']['default']
@@ -474,7 +474,7 @@ class nhl_etl_manager:
                     players.append(playerModel)
                     teamPlayerModel = teamroster(None, teamID, playerID, None, None, jerseyNumber, position)
                     teamPlayers.append(teamPlayerModel)
-                
+
                 for playerRoster in teamRoster.roster['goalies']:
                     playerID = playerRoster['id']
                     first_name = playerRoster['firstName']['default']
@@ -490,29 +490,29 @@ class nhl_etl_manager:
                     playerModel = player(playerID, first_name, m_inital,  last_name, None, birth_date,headshot_url)
                     players.append(playerModel)
                     teamPlayerModel = teamroster(None, teamID, playerID, None, None, jerseyNumber, position)
-                    teamPlayers.append(teamPlayerModel)    
-                
+                    teamPlayers.append(teamPlayerModel)
+
             transformed_data = {"players": players, "teamPlayers": teamPlayers}
             return transformed_data
         except Exception as e:
             self._log.error(f"transform_team_roster_info: An error occurred while transforming team roster info: {e}")
             raise Exception(f"An error occurred while transforming team roster info: {e}")
-    
+
     #---------------------------------
     # Games Pipeline
     def run_games_pipeline(self):
         try:
             # extract game data from NHL API
             jsonData = self.extract_games_info("https://api.nhle.com/stats/rest/en/game")
-            
+
             # transform json data into list of models
             transformedData = self.transform_games_info(jsonData)
-            
+
             # save model data to database
             self.load_games_info(transformedData)
         except Exception as e:
             self._log.error(f"run_games_pipeline: An error occurred while running the games pipeline: {e}")
-            raise Exception(f"An error occurred while running the games pipeline: {e}")   
+            raise Exception(f"An error occurred while running the games pipeline: {e}")
     def extract_games_info(self, url:str ):
         try:
             extracted_data = self._apiClient.fetch_nhl_data_with_url(url)
@@ -564,7 +564,7 @@ class nhl_etl_manager:
                     exit(1)
                 else:
                     self._log.info(f"Game data inserted successfully for game ID: {gameModel.id}")
-    
+
         except Exception as e:
             self._log.error(f"load_games_info: An error occurred while loading games info: {e}")
             raise Exception(f"An error occurred while loading games info: {e}")
@@ -574,7 +574,7 @@ class nhl_etl_manager:
         try:
             # get game ids from games table.
             game_ids = self._dbManager.execute_fetch("select id from games where year=2026 and month in (4,5);")
-            
+
             # extract game player stats data from NHL API
             jsonDataList = []
             for game_id in game_ids:
@@ -585,13 +585,13 @@ class nhl_etl_manager:
                     self._log.warning(f"No game player stats data found for game ID: {game_id[0]}")
             # transform json data into list of models
             transformedData = self.transform_game_player_stats_info(jsonDataList)
-            
+
             # save model data to database
             self.load_game_player_stats_info(transformedData)
         except Exception as e:
             self._log.error(f"run_game_player_stats_pipeline: An error occurred while running the game player stats pipeline: {e}")
             raise Exception(f"An error occurred while running the game player stats pipeline: {e}")
-    
+
     def extract_game_player_stats_info(self, url:str ):
         try:
             extracted_data = self._apiClient.fetch_nhl_data_with_url(url)
@@ -599,7 +599,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"extract_game_player_stats_info: An error occurred while extracting game player stats info: {e}")
             raise Exception(f"An error occurred while extracting game player stats info: {e}")
-    
+
     def transform_game_player_stats_info(self, games: list) -> list:
         try:
             transformed_data = []
@@ -612,7 +612,7 @@ class nhl_etl_manager:
                 if 'playerByGameStats' not in game or game['playerByGameStats'] is None:
                     self._log.warning(f"No player game stats data found for game ID: {gameId}")
                     continue
-                print('away team - forwards')    
+                print('away team - forwards')
                 for awayTeam in game['playerByGameStats']['awayTeam']['forwards']:
                     playerId = awayTeam['playerId']
                     position = awayTeam['position']
@@ -658,7 +658,7 @@ class nhl_etl_manager:
                         faceoffWinningPctg = 0
                     toi = awayTeam['toi']
                     blockedShots = awayTeam['blockedShots']
-                    
+
                     if 'shifts' in awayTeam and awayTeam['shifts'] is not None:
                         shifts = awayTeam['shifts']
                     else:
@@ -671,7 +671,7 @@ class nhl_etl_manager:
                         saveShotsAgainst='',savePctg=0,evenStrengthGoalsAgainst=0,powerPlayGoalsAgainst=0,shorthandedGoalsAgainst=0,
                         goalsAgainst=0,shotsAgainst=0,saves=0,toi=toi)
                     transformed_data.append(playerGameStatsModel)
-                print('away team - goalies')        
+                print('away team - goalies')
                 for awayTeam in game['playerByGameStats']['awayTeam']['goalies']:
                     playerId = awayTeam['playerId']
                     position = awayTeam['position']
@@ -708,7 +708,7 @@ class nhl_etl_manager:
                         saveShotsAgainst=saveShotsAgainst,savePctg=savePctg,evenStrengthGoalsAgainst=evenStrengthGoalsAgainst,powerPlayGoalsAgainst=powerPlayGoalsAgainst,shorthandedGoalsAgainst=shorthandedGoalsAgainst,
                         goalsAgainst=goalsAgainst,shotsAgainst=shotsAgainst,saves=saves,toi=toi)
                     transformed_data.append(playerGameStatsModel)
-                print('home team - forwards')    
+                print('home team - forwards')
                 for homeTeam in game['playerByGameStats']['homeTeam']['forwards']:
                     playerId = homeTeam['playerId']
                     position = homeTeam['position']
@@ -774,7 +774,7 @@ class nhl_etl_manager:
                     powerPlayShotsAgainst = homeTeam['powerPlayShotsAgainst']
                     shorthandedShotsAgainst = homeTeam['shorthandedShotsAgainst']
                     saveShotsAgainst = homeTeam['saveShotsAgainst']
-                    
+
                     if 'savePctg' in homeTeam and homeTeam['savePctg'] is not None:
                         savePctg = homeTeam['savePctg']
                     else:
@@ -809,7 +809,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"transform_game_player_stats_info: An error occurred while transforming game player stats info: {e}")
             raise Exception(f"An error occurred while transforming game player stats info: {e}")
-    
+
     def load_game_player_stats_info(self, transformedData: list):
         try:
             self.clear_table("player_game_stats")
@@ -828,15 +828,15 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"load_game_player_stats_info: An error occurred while loading game player stats info: {e}")
             raise Exception(f"An error occurred while loading game player stats info: {e}")
-    #---------------------------------    
-    
+    #---------------------------------
+
     #---------------------------------
     # Game Box Scores Pipeline
     def run_game_box_score_pipeline(self):
         try:
             # get game ids from games table.
             game_dates = self._dbManager.execute_fetch("select  distinct gameDate from games where year=2026 and month in (4,5);")
-            
+
             # extract game player stats data from NHL API
             jsonDataList = []
             for game_date in game_dates:
@@ -847,13 +847,13 @@ class nhl_etl_manager:
                     self._log.warning(f"No game box scores data found for game date: {game_date[0]}")
             # transform json data into list of models
             transformedData = self.transform_game_box_scores_info(jsonDataList)
-            
+
             # save model data to database
             self.load_game_box_scores_info(transformedData)
         except Exception as e:
             self._log.error(f"run_game_box_score_pipeline: An error occurred while running the game box scores pipeline: {e}")
             raise Exception(f"An error occurred while running the game box scores pipeline: {e}")
-    
+
     def extract_game_box_scores_info(self, url:str ):
         try:
             extracted_data = self._apiClient.fetch_nhl_data_with_url(url)
@@ -861,7 +861,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"extract_game_box_scores_info: An error occurred while extracting game box scores info: {e}")
             raise Exception(f"An error occurred while extracting game box scores info: {e}")
-    
+
     def transform_game_box_scores_info(self, gameBoxScores: list) -> list:
         try:
             transformed_data = []
@@ -882,7 +882,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"transform_game_box_scores_info: An error occurred while transforming game box scores info: {e}")
             raise Exception(f"An error occurred while transforming game box scores info: {e}")
-    
+
     def load_game_box_scores_info(self, transformedData: list):
         try:
             self.clear_table("game_box_scores")
@@ -901,7 +901,7 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"load_game_box_scores_info: An error occurred while loading game box scores info: {e}")
             raise Exception(f"An error occurred while loading game box scores info: {e}")
-    #---------------------------------    
+    #---------------------------------
     def clear_table(self, table_name: str = "seasons") -> bool:
         try:
             query = f"DELETE FROM {table_name};"

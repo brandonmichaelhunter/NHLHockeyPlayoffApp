@@ -2,17 +2,17 @@ import logging
 import sys
 
 class utility_manager:
-    
+
     def __init__(self, name: str, log_file: str = "app.log", level=logging.DEBUG, enable_console: bool = True):
         # 1. Create a logger instance
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
-        
+
         if enable_console:
             self.console_handler = logging.StreamHandler(sys.stdout)
         else:
             self.console_handler = None
-        
+
         # Avoid duplicate logs if the logger already has handlers
         if not self.logger.handlers:
             # 2. Define a common format for logs
@@ -47,11 +47,11 @@ class utility_manager:
         if self.console_handler:
             self.logger.removeHandler(self.console_handler)
             self.console_handler = None  # Clear reference
-            
+
     def get_logger(self):
         """Returns the configured logger instance."""
         return self.logger
-    
+
 # logger_wrapper = CustomLogger("DynamicApp", log_file="dynamic.log")
 #     log = logger_wrapper.get_logger()
 

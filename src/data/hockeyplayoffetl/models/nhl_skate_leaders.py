@@ -10,5 +10,3 @@ class nhl_skate_leader:
     points:int=0
     headshot_url:str=""
     teamlogo_url:str=""
-
-

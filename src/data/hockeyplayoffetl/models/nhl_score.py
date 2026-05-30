@@ -23,5 +23,3 @@ class nhl_score:
     round:str=""
     game_number:int=0
     series_info:str=""
-
-

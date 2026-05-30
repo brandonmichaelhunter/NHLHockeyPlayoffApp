@@ -6,7 +6,7 @@ class nhl_db_manager:
     def __init__(self, connection):
         self._conn = connection
         self._cursor = self._conn.cursor()
-    
+
     def execute_query(self, query: str, **kwargs)-> bool:
         try:
             if kwargs:
@@ -17,8 +17,8 @@ class nhl_db_manager:
             return True
         except Exception as e:
             raise Exception(f"An error occurred while executing the query: {e}")
-            return False    
-    
+            return False
+
     def execute_fetch(self, query: str, **kwargs)-> any:
         try:
             if kwargs:

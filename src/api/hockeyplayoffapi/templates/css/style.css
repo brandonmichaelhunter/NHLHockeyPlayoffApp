@@ -4,7 +4,7 @@
     object-fit: cover;
 }
 .headshot_image {
-    
+
     object-fit: cover;
       /* Horizontal alignment */
     vertical-align: top;    /* Optional: aligns content to the top of the cell */
