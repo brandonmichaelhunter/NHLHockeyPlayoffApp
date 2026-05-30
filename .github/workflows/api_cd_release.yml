@@ -1,10 +1,10 @@
 # My first workflow
-name: NHL Playoff App - FastAPI Docker Build and Push to Azure AKS
+name: API CD - Build, Push Docker Image to GHCR and Health Check
 
 # triggers
 on:
   workflow_run:
-    workflows: ["api integration test"]
+    workflows: ["API CI - Integration Tests"]
     types:
       - completed
   # push:
@@ -13,7 +13,14 @@ on:
 
 # Jobs
 jobs:
+  rebuild-caches:
+    uses: ./.github/workflows/reusable-rebuild-caches.yaml
+    with:
+        install_dev_deps: true
+        python-version: 3.13
+
   build-api-docker:
+    needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
@@ -21,19 +28,17 @@ jobs:
       packages: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Setup Python
-      uses: actions/setup-python@v6
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        python-version-file: "pyproject.toml"
+          python-version-file: "pyproject.toml"
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+    # - name: Install uv
+    #   uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-    - name: Install UV dependencies
-      run: uv sync --locked && uv sync --all-extras --dev && uv tool install poethepoet
+    # - name: Install UV dependencies
+    #   run: uv sync --locked && uv sync --all-extras --dev && uv tool install poethepoet
 
 
 

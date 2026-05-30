@@ -1,7 +1,18 @@
-name: PR Pre-commit
+name: API Code Analyzer
 
 on:
-  pull_request:
+  push: # Only run on pushes to the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
+    branches: [beetle]
+    paths:
+      - 'src/api/**'
+      - 'tests/api/**'
+      - '.pre-commit-config.yaml'
+  pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
+    branches: [beetle]
+    paths:
+      - 'src/api/**'
+      - 'tests/api/**'
+      - '.pre-commit-config.yaml'
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -26,7 +37,7 @@ jobs:
       - name: Set up Python
         uses: astral-sh/setup-uv@v4
         with:
-          python-version: "3.14"
+          python-version: "3.13"
 
       - name: Run pre-commit
         id: precommit
@@ -42,7 +53,8 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           exit "$exit_code"
-
+      # If pre-commit fails, make a comment on the current PR with the output of the pre-commit command.
+      # Limit the output to 60000 characters to avoid hitting GitHub's comment size limit.
       - name: Comment on PR if pre-commit failed
         if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
