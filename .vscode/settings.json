@@ -1,0 +1,27 @@
+{
+    "python.testing.pytestArgs": [
+        "src"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "dbcode.connections": [
+        {
+            "connectionId": "Qnbvl28qHs8yxObMsGSzg",
+            "name": "NHLHockeyPlayoffDB",
+            "driver": "sqlite",
+            "color": "#FF642F",
+            "connectionType": "socket",
+            "socket": "NHLHockeyPlayoffApp/src/data/hockeyplayoffdb/hockeyplayoff.db",
+            "readOnly": false,
+            "role": "development",
+            "postConnectionSqlType": "inline",
+            "driverOptions": {
+                "extensions": []
+            },
+            "idleTimeout": 0,
+            "introspection": {
+                "progressive": false
+            }
+        }
+    ]
+}

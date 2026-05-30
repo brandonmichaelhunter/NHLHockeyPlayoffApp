@@ -1,0 +1,69 @@
+# Name: CI verification workflow for Dependabot PRs
+# Description: 
+# - Designed for repositories using GitHub's multi-ecosystem grouping.
+# - Triggers automiatically whenever Dependabot opens or updates a PR.
+# - The workflow includes two jobs: one for verifying Python dependencies and lockfile integrity, and another for validating Docker builds.
+# - Ensures that any changes made by Dependabot to pyproject.toml and Dockerfiles are thoroughly tested before merging.
+name: Dependabot Verification
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    # Ensure it triggers when Dependabot updates a multi-ecosystem PR
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  # Job 1: Verify Python dependencies and lockfile integrity
+  verify-python:
+    name: Validate uv & Python Dependencies
+    runs-on: ubuntu-latest
+    # Secure defaults: limit repository token privileges
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Verify uv Lockfile Consistency
+        run: |
+          # Confirms the lockfile perfectly aligns with pyproject.toml changes
+          uv lock --locked
+
+      - name: Run Application Tests
+        run: |
+          # Sync dependencies and run your test suite
+          uv run pytest
+
+  # Job 2: Verify the Docker base image and build stability
+  verify-docker:
+    name: Validate Docker Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Test Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./src/Dockerfile
+          push: false # Do not push the image to a registry during PR testing
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
