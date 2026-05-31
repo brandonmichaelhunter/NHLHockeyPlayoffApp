@@ -1,7 +1,7 @@
 name: API CI - Integration Tests
 on:
   workflow_run:
-    workflows: ["API CI - Code Analyzer and Dependency Checker", "API CI - Unit Tests"]
+    workflows: ["API CI - Unit Tests"]
     types:
       - completed
 env:
@@ -10,6 +10,7 @@ jobs:
   rebuild-caches:
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
     with:
+      cache_precommit: true
       install_dev_deps: true
       python-version: 3.13
 
