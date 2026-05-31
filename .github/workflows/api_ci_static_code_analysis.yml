@@ -17,7 +17,7 @@ on:
       - 'tests/api/**'
       - '.pre-commit-config.yaml'
 
-
+  workflow_dispatch: # This enables manual runs
     
 
 permissions:
