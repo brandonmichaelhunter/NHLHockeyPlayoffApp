@@ -1,7 +1,7 @@
 name: API CI - Unit Tests
 on:
   workflow_run:
-    workflows: ["API Code Analyzer"]
+    workflows: ["API CI - Static Code Analysis"]
     types:
       - completed
 #   pull_request:
