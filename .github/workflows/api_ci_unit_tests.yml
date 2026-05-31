@@ -32,7 +32,6 @@ jobs:
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
     with:
       cache_precommit: true
-      install_dev_deps: true
       python-version: 3.13
 
   unit_tests:
