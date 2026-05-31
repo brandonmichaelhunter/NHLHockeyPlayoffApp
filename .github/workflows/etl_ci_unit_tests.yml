@@ -1,0 +1,15 @@
+# etl ci unit test file
+name: ETL CI - Unit Tests
+on:
+  workflow_run:
+    workflows: ["ETL Code Analyzer"]
+    types:
+      - completed
+env:
+  PYTHON_VERSION: '3.13'
+jobs:
+  rebuild-caches:
+    uses: ./.github/workflows/reusable-rebuild-caches.yaml
+    with:
+      install_dev_deps: true
+      python-version: 3.13

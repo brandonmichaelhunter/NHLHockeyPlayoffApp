@@ -18,7 +18,7 @@ on:
       - 'src/api/**'
       - 'tests/api/**'
       - '.pre-commit-config.yaml'
-    paths-ignore: 
+    paths-ignore:
       - '**.db'
       - '.github/**'
 
