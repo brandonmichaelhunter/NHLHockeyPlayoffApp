@@ -31,7 +31,6 @@ jobs:
           python-version: ${{ inputs.python-version }}
       
       - id: install-dev-dependencies
-        if: ${{ inputs.install_dev_deps }}
         name: Install dev dependencies
         run: |
           uv sync --locked
