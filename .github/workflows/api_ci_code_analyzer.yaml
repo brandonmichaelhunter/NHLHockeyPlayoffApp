@@ -7,12 +7,18 @@ on:
       - 'src/api/**'
       - 'tests/api/**'
       - '.pre-commit-config.yaml'
+    paths-ignore:
+      - '**.db'
+      - '.github/**'
   pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
     branches: [beetle]
     paths:
       - 'src/api/**'
       - 'tests/api/**'
       - '.pre-commit-config.yaml'
+    paths-ignore: 
+      - '**.db'
+      - '.github/**'
     types: [opened, synchronize, reopened]
 
 permissions:
