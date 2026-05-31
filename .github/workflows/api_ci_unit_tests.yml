@@ -4,6 +4,20 @@ on:
     workflows: ["API CI - Code Analyzer and Dependency Checker"]
     types:
       - completed
+  push: # Only run on pushes to the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
+    branches: [beetle]
+    paths:
+      - 'src/api/**'
+      - 'tests/api/**'
+      - '.pre-commit-config.yaml'
+
+  pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
+    branches: [beetle]
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/api/**'
+      - 'tests/api/**'
+      - '.pre-commit-config.yaml'
 #   pull_request:
 #     branches:
 #       - beetle
