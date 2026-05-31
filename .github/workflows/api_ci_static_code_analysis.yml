@@ -31,7 +31,7 @@ jobs:
       cache_precommit: true
 
   pre-commit:
-    name: Run pre-commit and comment on failure
+    name: Run Linter and Formatter
     needs: rebuild-caches
     runs-on: ubuntu-latest
 
