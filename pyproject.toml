@@ -30,6 +30,7 @@ dependencies = [
     "markdown-it-py==4.0.0",
     "markupsafe==3.0.3",
     "mdurl==0.1.2",
+    "pip-audit>=2.10.0",
     "poethepoet>=0.45.0",
     "pydantic==2.13.3",
     "pydantic-core==2.46.3",
@@ -66,6 +67,7 @@ dependencies = [
 dev = [
     "httpx>=0.28.1",
     "magicmock>=0.3",
+    "pip-audit>=2.10.0",
     "poethepoet>=0.45.0",
     "pre-commit>=4.6.0",
     "pytest>=9.0.3",
