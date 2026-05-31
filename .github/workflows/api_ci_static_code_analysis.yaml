@@ -1,5 +1,6 @@
 name: API CI - Code Analyzer and Dependency Checker
 
+
 on:
   push: # Only run on pushes to the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
     branches: [beetle]
@@ -10,6 +11,7 @@ on:
     paths-ignore:
       - '**.db'
       - '.github/**'
+
   pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
     branches: [beetle]
     paths:
@@ -19,6 +21,7 @@ on:
     paths-ignore: 
       - '**.db'
       - '.github/**'
+
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -124,9 +127,10 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: `
-                  ### 🚨 Pip-audit Vulnerability Report
-
+                  ### 🚨 Pip-audit Vulnerability Report 
+                  
                   *Report generated at: ${{ steps.timestamp.outputs.report_time }}*
+                  
 
                   ${report}
                 `
