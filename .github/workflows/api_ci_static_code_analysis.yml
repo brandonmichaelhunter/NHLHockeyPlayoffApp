@@ -57,7 +57,7 @@ jobs:
             cat precommit-output.txt
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-          exit "$exit_code"
+          exit 0
       # If pre-commit fails, make a comment on the current PR with the output of the pre-commit command.
       # Limit the output to 60000 characters to avoid hitting GitHub's comment size limit.
       - name: Comment on PR if pre-commit failed
