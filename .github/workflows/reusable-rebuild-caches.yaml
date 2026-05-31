@@ -29,6 +29,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ inputs.python-version }}
+      
+      - id: install-dev-dependencies
+        if: ${{ inputs.install_dev_deps }}
+        name: Install dev dependencies
+        run: |
+          uv sync --locked
+          uv sync --all-extras --dev
+          uv tool install poethepoet
+
+      
       - id: install-uv-tools
         if: ${{ inputs.cache_precommit }}
         name: Install uv and pre-commit tools
@@ -48,10 +58,4 @@ jobs:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - id: install-dev-dependencies
-        if: ${{ inputs.install_dev_deps }}
-        name: Install dev dependencies
-        run: |
-          uv sync --locked
-          uv sync --all-extras --dev
-          uv tool install poethepoet
+      
