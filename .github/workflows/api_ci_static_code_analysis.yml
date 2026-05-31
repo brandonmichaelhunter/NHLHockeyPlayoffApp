@@ -26,7 +26,7 @@ permissions:
 
 jobs:
   rebuild-caches:
-    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yaml@beetle
+    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
     with:
       cache_precommit: true
 
