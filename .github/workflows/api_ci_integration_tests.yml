@@ -1,7 +1,7 @@
 name: API CI - Integration Tests
 on:
   workflow_run:
-    workflows: ["API Code Analyzer", "API CI - Unit Tests"]
+    workflows: ["API CI - Static Code Analysis", "API CI - Unit Tests"]
     types:
       - completed
 env:
