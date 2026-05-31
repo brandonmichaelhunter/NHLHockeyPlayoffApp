@@ -18,6 +18,7 @@ on:
       - 'src/api/**'
       - 'tests/api/**'
       - '.pre-commit-config.yaml'
+  workflow_dispatch: # This enables manual runs
 #   pull_request:
 #     branches:
 #       - beetle
