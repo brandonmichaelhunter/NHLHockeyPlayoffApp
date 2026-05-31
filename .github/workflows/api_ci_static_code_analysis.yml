@@ -18,7 +18,7 @@ on:
       - '.pre-commit-config.yaml'
 
   workflow_dispatch: # This enables manual runs
-    
+
 
 permissions:
   contents: read
@@ -123,10 +123,10 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: `
-                  ### 🚨 Pip-audit Vulnerability Report 
-                  
+                  ### 🚨 Pip-audit Vulnerability Report
+
                   *Report generated at: ${{ steps.timestamp.outputs.report_time }}*
-                  
+
 
                   ${report}
                 `

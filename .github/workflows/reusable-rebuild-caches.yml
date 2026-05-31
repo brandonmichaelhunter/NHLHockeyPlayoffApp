@@ -29,24 +29,19 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ inputs.python-version }}
-    
+
       - id: install-uv
         name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        
+
       - id: install-dev-dependencies
+        if: ${{ inputs.cache_precommit }}
         name: Install dev dependencies
         run: |
           uv sync --locked
           uv sync --all-extras --dev
           uv tool install poethepoet
-
-      
-      - id: install-uv-tools
-        if: ${{ inputs.cache_precommit }}
-        name: Install uv and pre-commit tools
-        run: |
-         uv tool install pre-commit --with pre-commit-uv
+          uv tool install pre-commit --with pre-commit-uv
 
       - id: pre-commit
         if: ${{ inputs.cache_precommit }}
@@ -60,5 +55,3 @@ jobs:
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-
-      
