@@ -91,7 +91,7 @@ jobs:
         id: audit
         run: |
           FILENAME="pip-audit-report-${{ steps.timestamp.outputs.report_time }}.md"
-          pip-audit --output $FILENAME --format markdown
+          uv run pip-audit --output $FILENAME --format markdown
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
       - name: Read pip-audit report
