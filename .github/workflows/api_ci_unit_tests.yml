@@ -52,7 +52,13 @@ jobs:
     # This is the standard checkout for non-workflow_run triggers (push, pull_request).
     - uses: actions/checkout@v4
       if: github.event_name != 'workflow_run'
-      
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: astral-sh/setup-uv@v4
+      with:
+          python-version: "3.13"  
     #- name: Set up Python
     #  uses: actions/setup-python@v5
     #  with:
