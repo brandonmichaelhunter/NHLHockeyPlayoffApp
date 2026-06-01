@@ -14,12 +14,15 @@ on:
 # Jobs
 jobs:
   rebuild-caches:
-    uses: ./.github/workflows/reusable-rebuild-caches.yaml
+    name: Rebuild Local Cache
+    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
     with:
+        cache_precommit: true
         install_dev_deps: true
         python-version: 3.13
 
   build-api-docker:
+    name: Deploy API To Docker Container
     needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
@@ -112,6 +115,7 @@ jobs:
 
   health-checker:
     needs: build-api-docker # This makes 'test' wait for 'build'
+    name: Run Health Checker
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
