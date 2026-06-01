@@ -20,6 +20,7 @@ permissions:
 
 jobs:
   rebuild-caches:
+    name: Local Cache Rebuild
     runs-on: ubuntu-latest
     steps:
       - id: checkout
