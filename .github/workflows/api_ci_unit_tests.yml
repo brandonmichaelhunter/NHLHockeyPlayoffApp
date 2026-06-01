@@ -36,7 +36,7 @@ jobs:
       python-version: 3.13
 
   unit_tests:
-    name: API Unit Tests
+    name: Run API Unit Tests
     needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
