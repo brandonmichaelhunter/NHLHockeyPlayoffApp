@@ -35,33 +35,47 @@ jobs:
   static-code-analysis:
     name: Static Code Analysis
     needs: rebuild-caches
+    permissions:
+      contents: read
+      pull-requests: write
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/api_ci_static_code_analysis.yml@beetle
 
   unit-tests:
     name: Unit Tests
     needs: static-code-analysis
+    permissions:
+      contents: read
+      pull-requests: write
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/api_ci_unit_tests.yml@beetle
 
   integration-tests:
     name: Integration Tests
     needs: unit-tests
+    permissions:
+      contents: read
+      pull-requests: write
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/api_ci_integration_tests.yml@beetle
 
   docker-image-build:
     name: Docker Image Build and Push
     needs: integration-tests
     permissions:
-     contents: read
-     pull-requests: write
-     packages: write
+      contents: read
+      pull-requests: write
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/api_ci_docker_image_build.yml@beetle
 
   health-check:
     name: Health Check
     needs: docker-image-build
+    permissions:
+      contents: read
+      pull-requests: write
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/api_ci_health_check.yml@beetle
 
   deploy-to-production:
     name: Deploy to Production
     needs: health-check
+    permissions:
+      contents: read
+      pull-requests: write
     uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/api_cd_deploy_to_production.yml@beetle
