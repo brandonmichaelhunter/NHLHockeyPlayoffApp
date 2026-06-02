@@ -31,8 +31,6 @@ jobs:
     with:
       cache_precommit: true
 
-    # Convert all app_ci into their own reusable workflows.
-    # Then, call those reusable workflows from this main pipeline workflow.
     # This way, we can have a single pipeline workflow that orchestrates the entire CI process for the API, and we can easily add or remove steps from the pipeline by modifying the reusable workflows
   static-code-analysis:
     name: Static Code Analysis
