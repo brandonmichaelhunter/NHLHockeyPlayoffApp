@@ -44,7 +44,7 @@ jobs:
     environment: NHLHockeyAppEnv
     permissions:
       contents: read
-      packages: write
+      # packages: write
     steps:
     # This step checks out the PR's code when triggered by a workflow_run event from a PR.
     # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
