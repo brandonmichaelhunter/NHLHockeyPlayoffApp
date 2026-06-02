@@ -10,15 +10,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  #rebuild-caches:
-  #  name: Rebuild Local Cache
-  #  uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
-  #  with:
-  #    cache_precommit: true
-
   pre-commit:
     name: Run Linter and Formatter
-   # needs: rebuild-caches
     runs-on: ubuntu-latest
 
     steps:
