@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # This enables manual runs
 permissions:
   contents: read
-
+  packages: write
 jobs:
   #rebuild-caches:
   #  name: Rebuild Local Cache
@@ -23,7 +23,7 @@ jobs:
     environment: NHLHockeyAppEnv
     permissions:
       contents: read
-  #    packages: write
+      packages: write
 
     steps:
     - uses: actions/checkout@v4
@@ -47,13 +47,14 @@ jobs:
          registry: ghcr.io
          username: ${{ github.actor }}
          password: ${{ secrets.GITHUB_TOKEN }}
-
+ 
     - name: Extract Metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/${{ github.actor }}/nhlplayoffappv${{ github.sha}}:latest
-
+        # images: ghcr.io/${{ github.repository_owner }}/nhlhockeyplayoffapp
+         images: ghcr.io/${{ github.actor }}/nhlplayoffappv${{ github.sha}}:latest
+        
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
