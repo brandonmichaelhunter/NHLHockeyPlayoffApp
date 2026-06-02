@@ -9,22 +9,22 @@ on:
 env:
   PYTHON_VERSION: '3.13'
 jobs:
-  rebuild-caches:
-    name: Rebuild Local Cache
-    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
-    with:
-      cache_precommit: true
-      install_dev_deps: true
-      python-version: 3.13
+  #rebuild-caches:
+  #  name: Rebuild Local Cache
+  #  uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
+  #  with:
+  #    cache_precommit: true
+  #    install_dev_deps: true
+  #    python-version: 3.13
 
   integration-test-api:
     name: Run API Integration Tests
-    needs: rebuild-caches
+    #needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
       contents: read
-      packages: write
+      #packages: write
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
