@@ -1,4 +1,4 @@
-name: API CD - Deploy to Production
+name: API - CD - Deploy to Production
 
 # triggers
 on:
