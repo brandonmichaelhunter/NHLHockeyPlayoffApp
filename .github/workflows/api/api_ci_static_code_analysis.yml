@@ -2,22 +2,24 @@ name: API CI - Code Analyzer and Dependency Checker
 
 
 on:
-  push: # Only run on pushes to the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
-    branches: [beetle]
-    paths:
-      - 'src/api/**'
-      - 'tests/api/**'
-      - '.pre-commit-config.yaml'
-
-  pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
-    branches: [beetle]
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'src/api/**'
-      - 'tests/api/**'
-      - '.pre-commit-config.yaml'
-
+  workflow_call:
   workflow_dispatch: # This enables manual runs
+  # push: # Only run on pushes to the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
+  #   branches: [beetle]
+  #   paths:
+  #     - 'src/api/**'
+  #     - 'tests/api/**'
+  #     - '.pre-commit-config.yaml'
+
+  # pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
+  #   branches: [beetle]
+  #   types: [opened, synchronize, reopened]
+  #   paths:
+  #     - 'src/api/**'
+  #     - 'tests/api/**'
+  #     - '.pre-commit-config.yaml'
+
+  #workflow_dispatch: # This enables manual runs
 
 
 permissions:
@@ -97,7 +99,7 @@ jobs:
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
           exit 0
-          
+
       - name: Read pip-audit report
         id: audit_report
         uses: actions/github-script@v7

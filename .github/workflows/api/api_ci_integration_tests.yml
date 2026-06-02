@@ -1,9 +1,11 @@
 name: API CI - Integration Tests
 on:
-  workflow_run:
-    workflows: ["API CI - Unit Tests"]
-    types:
-      - completed
+  workflow_call:
+  workflow_dispatch: # This enables manual runs
+  # workflow_run:
+  #   workflows: ["API CI - Unit Tests"]
+  #   types:
+  #     - completed
 env:
   PYTHON_VERSION: '3.13'
 jobs:
@@ -29,11 +31,11 @@ jobs:
       uses: actions/setup-python@v5
       with:
           python-version-file: "pyproject.toml"
-      
+
     - name: Set up UV
       uses: astral-sh/setup-uv@v4
       with:
-          python-version-file: "pyproject.toml"
+          python-version: 3.13
     # - name: Install uv
     #   uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 

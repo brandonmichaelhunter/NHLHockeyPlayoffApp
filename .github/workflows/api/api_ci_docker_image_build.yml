@@ -1,17 +1,12 @@
-# My first workflow
-name: API CD - Build, Push Docker Image to GHCR and Health Check
+name: API CI - Docker Image Build and Push to GHCR
 
 # triggers
 on:
-  workflow_run:
-    workflows: ["API CI - Integration Tests"]
-    types:
-      - completed
-  # push:
-  #   branches:
-  #     - beetle
+  workflow_call:
+  workflow_dispatch: # This enables manual runs
+permissions:
+  contents: read
 
-# Jobs
 jobs:
   rebuild-caches:
     name: Rebuild Local Cache
@@ -22,7 +17,7 @@ jobs:
         python-version: 3.13
 
   build-api-docker:
-    name: Deploy API To Docker Container
+    name: Docker Image Build and Push to GHCR
     needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
@@ -57,14 +52,14 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
+        images: ghcr.io/${{ github.actor }}/nhlplayoffappv${{ github.sha}}:latest
 
     - name: Build and Push
       uses: docker/build-push-action@v5
       with:
         file: ./src/Dockerfile
         push: true
-        tags: ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
+        tags: ghcr.io/${{ github.actor }}/nhlplayoffappv${{ github.sha}}:latest
 
 
   # unit-test-api:
@@ -113,40 +108,40 @@ jobs:
   #   - name: Run API Unit Tests
   #     run: poe integration_test
 
-  health-checker:
-    needs: build-api-docker # This makes 'test' wait for 'build'
-    name: Run Health Checker
-    runs-on: ubuntu-latest
-    environment: NHLHockeyAppEnv
-    permissions:
-      contents: read
-      packages: write
+#   health-checker:
+#     needs: build-api-docker # This makes 'test' wait for 'build'
+#     name: Run Health Checker
+#     runs-on: ubuntu-latest
+#     environment: NHLHockeyAppEnv
+#     permissions:
+#       contents: read
+#       packages: write
 
-    steps:
+#     steps:
 
-    - name: Pull image from GHCR
-      run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
-    - name: Execute Image
-      run: |
-          docker run -d -p 8000:8000 ghcr.io/${{ github.actor }}/nhlplayoffappv1:latest
-          # Wait for the API to be ready
-          sleep 5
-    - name: API Health Check
-      run: |
-        STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health/live)
-        if [ "$STATUS_CODE" -ne 200 ]; then
-            echo "The request failed with status: $STATUS_CODE"
-            exit 1
-        else
-            echo "The request was sucessfull with status: $STATUS_CODE"
-        fi
-    - name: DB Connection Heatlh Check
-      run: |
-        RESPONSE=$(curl -s http://localhost:8000/health/ready)
-        if ["$RESPONSE" -ne "Database connection successful"]; then
-           echo "Database connection was unccessful"
-           exit 1
-        fi
+#     - name: Pull image from GHCR
+#       run: docker pull ghcr.io/${{ github.actor }}/nhlplayoffappv${{ github.sha}}:latest
+#     - name: Execute Image
+#       run: |
+#           docker run -d -p 8000:8000 ghcr.io/${{ github.actor }}/nhlplayoffappv${{ github.sha}}:latest
+#           # Wait for the API to be ready
+#           sleep 5
+#     - name: API Health Check
+#       run: |
+#         STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health/live)
+#         if [ "$STATUS_CODE" -ne 200 ]; then
+#             echo "The request failed with status: $STATUS_CODE"
+#             exit 1
+#         else
+#             echo "The request was sucessfull with status: $STATUS_CODE"
+#         fi
+#     - name: DB Connection Heatlh Check
+#       run: |
+#         RESPONSE=$(curl -s http://localhost:8000/health/ready)
+#         if ["$RESPONSE" -ne "Database connection successful"]; then
+#            echo "Database connection was unccessful"
+#            exit 1
+#         fi
 
 
     env:
