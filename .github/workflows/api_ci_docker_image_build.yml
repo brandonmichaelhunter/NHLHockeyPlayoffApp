@@ -1,4 +1,4 @@
-name: API CI - Docker Image Build and Push to GHCR
+name: API - CI - Docker Image Build and Push to GHCR
 
 # triggers
 on:
