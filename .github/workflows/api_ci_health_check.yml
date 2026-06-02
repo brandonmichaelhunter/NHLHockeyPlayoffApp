@@ -1,4 +1,4 @@
-name: API CI - Health Check
+name: API - CI - Health Check
 
 # triggers
 on:
