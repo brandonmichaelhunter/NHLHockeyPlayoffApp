@@ -8,22 +8,22 @@ permissions:
   contents: read
 
 jobs:
-  rebuild-caches:
-    name: Rebuild Local Cache
-    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
-    with:
-        cache_precommit: true
-        install_dev_deps: true
-        python-version: 3.13
+  #rebuild-caches:
+  #  name: Rebuild Local Cache
+  #  uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
+  #  with:
+  #      cache_precommit: true
+  #      install_dev_deps: true
+  #     python-version: 3.13
 
   build-api-docker:
     name: Docker Image Build and Push to GHCR
-    needs: rebuild-caches
+ #   needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
       contents: read
-      packages: write
+  #    packages: write
 
     steps:
     - uses: actions/checkout@v4
