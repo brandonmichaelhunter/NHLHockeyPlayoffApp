@@ -8,22 +8,22 @@ permissions:
   contents: read
 
 jobs:
-  rebuild-caches:
-    name: Rebuild Local Cache
-    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
-    with:
-        cache_precommit: true
-        install_dev_deps: true
-        python-version: 3.13
+  #rebuild-caches:
+  #  name: Rebuild Local Cache
+  #  uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yml@beetle
+  #  with:
+  #      cache_precommit: true
+  #      install_dev_deps: true
+  #      python-version: 3.13
 
   deploy-api-production:
     name: Deploy API To Production
-    needs: rebuild-caches
+  #  needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
     permissions:
       contents: read
-      packages: write
+ #     packages: write
 
     steps:
       - run: echo "This is where we will deploy the API to production. This job will be called from the main pipeline workflow after the health check job, and it will be responsible for deploying the API to production if all previous steps in the pipeline have succeeded."
