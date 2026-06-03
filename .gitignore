@@ -221,3 +221,7 @@ __marimo__/
 # Sqlite files
 *.db-shm
 *.db-wal
+*.log
+pip-audit-report.md
+pip-audit-report.md
+pip-audit-report.md
