@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
 from .models.nhl_teams import nhl_teams, teams
-from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_save_percentage_leaders, nhl_plusminus_leaders, nhl_points_leaders
+from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_plusminus_leaders, nhl_points_leaders
 print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get('DOCKER_ENV'):
    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
@@ -100,11 +100,13 @@ async def get_nhl_stats(session: SessionDep, request:Request, teams: int=0):
           playerPlusMinusRanks = get_nhl_plusminus_leaders(session=session, TeamName=teams)
           playerPointsRanks = get_nhl_points_leaders(session=session, TeamName=teams)
           goalSavePercentageRanks = get_nhl_goaltending_save_percentage_leaders(session=session, TeamName=teams)
+          goalGAARanks = get_nhl_goaltending_gaa_leaders(session=session, TeamName=teams)
           return templates.TemplateResponse(request=request, name="nhlstats_leaders.html",
                                             context={"playerGoalRanks": playerGoalRanks,
                                                      "playerPlusMinusRanks": playerPlusMinusRanks,
                                                      "playerPointsRanks": playerPointsRanks,
-                                                     "goalSavePercentageRanks": goalSavePercentageRanks})
+                                                     "goalSavePercentageRanks": goalSavePercentageRanks,
+                                                     "goalGAARanks": goalGAARanks})
 
 
 
@@ -285,6 +287,64 @@ def get_nhl_goaltending_save_percentage_leaders(session: SessionDep, TeamName:in
                 savePercentageRanks = [nhl_goaltending_save_percentage_leaders(**row) for row in rows]
 
           return savePercentageRanks
+def get_nhl_goaltending_gaa_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goaltending_gaa_leaders]:
+
+          if(TeamName != 0):
+                query = text("""
+                        select distinct playerID as player_id,
+                        avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2)) as gaa,
+                        RANK() OVER (ORDER BY avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2))  asc) as league_ranking,
+                                                    b.first_name as player_firstname, b.last_name  as player_lastname,
+                        b.headshot_url as player_headshot,
+                        a.position as player_position,
+                        d.name as team_name,
+                        d.abbrv as team_abbrv,
+                        d.logo_url as team_logo
+                        from player_game_stats a inner join players b on b.id = a.playerID
+                                                                            inner join team_roster c on c.player_id = b.id
+                                                                            inner join teams d on d.id = c.team_id
+                        where a.position in ('G') and d.id = :TeamName and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
+                                    gameID in (select id from games where year = 2026 and month in (5)) ) and
+                                    ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) > 1
+                        group by gameID
+                        order by gaa  asc
+                        limit 5
+                        """)
+                results = session.execute(query, {"TeamName": TeamName})
+                rows = results.mappings().all()
+                gaaRanks = [nhl_goaltending_gaa_leaders(**row) for row in rows]
+          else:
+                query = text("""
+                        select distinct playerID as player_id,
+                        avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2)) as gaa,
+                        RANK() OVER (ORDER BY avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2))  asc) as league_ranking,
+                                                    b.first_name as player_firstname, b.last_name  as player_lastname,
+                        b.headshot_url as player_headshot,
+                        a.position as player_position,
+                        d.name as team_name,
+                        d.abbrv as team_abbrv,
+                        d.logo_url as team_logo
+                        from player_game_stats a inner join players b on b.id = a.playerID
+                                                                            inner join team_roster c on c.player_id = b.id
+                                                                            inner join teams d on d.id = c.team_id
+                        where a.position in ('G') and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
+                                    gameID in (select id from games where year = 2026 and month in (5)) ) and
+                                    ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) > 1
+                        group by gameID
+                        order by gaa  asc
+                        limit 5
+                        """)
+                results = session.execute(query)
+                rows = results.mappings().all()
+                gaaRanks = [nhl_goaltending_gaa_leaders(**row) for row in rows]
+          return gaaRanks
+
+
+
+
+
+
+
 
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q:str | None = None):
