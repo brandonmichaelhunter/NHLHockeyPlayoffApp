@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
 from .models.nhl_teams import nhl_teams, teams
-from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_plusminus_leaders, nhl_points_leaders
+from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_goaltending_wins_leaders, nhl_plusminus_leaders, nhl_points_leaders
 print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get('DOCKER_ENV'):
    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
@@ -99,14 +99,16 @@ async def get_nhl_stats(session: SessionDep, request:Request, teams: int=0):
           playerGoalRanks = get_nhl_goal_leaders(session=session, TeamName=teams)
           playerPlusMinusRanks = get_nhl_plusminus_leaders(session=session, TeamName=teams)
           playerPointsRanks = get_nhl_points_leaders(session=session, TeamName=teams)
-          goalSavePercentageRanks = get_nhl_goaltending_save_percentage_leaders(session=session, TeamName=teams)
-          goalGAARanks = get_nhl_goaltending_gaa_leaders(session=session, TeamName=teams)
+          goalieSavePercentageRanks = get_nhl_goaltending_save_percentage_leaders(session=session, TeamName=teams)
+          goalieGAARanks = get_nhl_goaltending_gaa_leaders(session=session, TeamName=teams)
+          goalieWins = get_nhl_goaltending_wins_leaders(session=session, TeamName=teams)
           return templates.TemplateResponse(request=request, name="nhlstats_leaders.html",
                                             context={"playerGoalRanks": playerGoalRanks,
                                                      "playerPlusMinusRanks": playerPlusMinusRanks,
                                                      "playerPointsRanks": playerPointsRanks,
-                                                     "goalSavePercentageRanks": goalSavePercentageRanks,
-                                                     "goalGAARanks": goalGAARanks})
+                                                     "goalieSavePercentageRanks": goalieSavePercentageRanks,
+                                                     "goalieGAARanks": goalieGAARanks,
+                                                     "goalieWinsRanks": goalieWins})
 
 
 
@@ -339,6 +341,50 @@ def get_nhl_goaltending_gaa_leaders(session: SessionDep, TeamName:int=0)-> list[
                 gaaRanks = [nhl_goaltending_gaa_leaders(**row) for row in rows]
           return gaaRanks
 
+def get_nhl_goaltending_wins_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goaltending_wins_leaders]:
+
+          if(TeamName != 0):
+                query = text("""
+                        SELECT  gwl.player_id, gwl.wins,
+                                RANK() OVER (ORDER BY gwl.wins DESC) as league_ranking,
+                                gwl.first_name as player_firstname,
+                                gwl.last_name as player_lastname,
+                                gwl.headshot_url as player_headshot,
+                                'G' as player_position,
+                                gwl.team_name,
+                                gwl.team_abbrv,
+                                gwl.teamlogo_url as team_logo
+						FROM
+							goalie_wins_leaders gwl
+                        WHERE gwl.team_id = :TeamName
+						ORDER BY
+							wins DESC
+						LIMIT 5;
+                        """)
+                results = session.execute(query, {"TeamName": TeamName})
+                rows = results.mappings().all()
+                wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
+          else:
+                query = text("""
+                        SELECT gwl.player_id, gwl.wins,
+                                RANK() OVER (ORDER BY gwl.wins DESC) as league_ranking,
+                                gwl.first_name as player_firstname,
+                                gwl.last_name as player_lastname,
+                                gwl.headshot_url as player_headshot,
+                                'G' as player_position,
+                                gwl.team_name,
+                                gwl.team_abbrv,
+                                gwl.teamlogo_url as team_logo
+						FROM
+							goalie_wins_leaders gwl
+						ORDER BY
+							wins DESC
+						LIMIT 5;
+                        """)
+                results = session.execute(query)
+                rows = results.mappings().all()
+                wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
+          return wins
 
 
 

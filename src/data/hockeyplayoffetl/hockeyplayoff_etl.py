@@ -18,20 +18,6 @@ from .services.nhl_db_manager import nhl_db_manager
 import os
 from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Notes:
-# - Team Roster URL - https://api-web.nhle.com/v1/roster/{team_abbrv}/current
-# - Team Info URL - https://api.nhle.com/stats/rest/en/team
-# - Player Info URL - https://api-web.nhle.com/v1/player/{playerId}/landing
-# - Game Boxscore URL - https://api-web.nhle.com/v1/player/{player}/game-log/{season}/{game-type}
-# - Seasons URL - https://api-web.nhle.com/v1/season
-# - Team Info URL - https://api-web.nhle.com/v1/standings/now
-# - Game Info URL - https://api.nhle.com/stats/rest/en/game
-
-# - Game Details URL - https://api-web.nhle.com/v1/score/2026-04-15
-# - Game Boxscore URL - https://api-web.nhle.com/v1/gamecenter/2025090030/boxscore
-# - All Game Details URL - https://api.nhle.com/stats/rest/en/game
-
 class NHLDataManager:
       dbConn = None
       dbCursor = None

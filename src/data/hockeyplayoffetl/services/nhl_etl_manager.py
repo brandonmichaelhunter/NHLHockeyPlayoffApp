@@ -2,8 +2,8 @@ import sqlite3
 
 from dns import query
 from requests import models
-
-from src.data.hockeyplayoffetl.models.nhl_models import DynamicObject, game, gameboxscore, nhl_team, player, playergamestats, season, teamroster
+import datetime
+from src.data.hockeyplayoffetl.models.nhl_models import DynamicObject, game, gameboxscore, nhl_team, player, playergamestats, season, teamroster,nhl_goaltending_win_leader
 from .nhl_api_client import nhl_api_client
 from .nhl_db_manager import nhl_db_manager
 from ..utils.utility_manager import utility_manager
@@ -31,7 +31,8 @@ class nhl_etl_manager:
                 self.__get_games_query,
                 self.__get_players_query,
                 self.__get_seasons_query,
-                self.__get_player_game_stats_query
+                self.__get_player_game_stats_query,
+                self.__get_goalie_wins_leaders_query
             ]
             for method in query_methods:
                 query = method()
@@ -196,6 +197,23 @@ class nhl_etl_manager:
             );
         '''
         return query
+    def __get_goalie_wins_leaders_query(self) -> str:
+        query = '''
+            CREATE TABLE IF NOT EXISTS goalie_wins_leaders
+            (
+                player_id                integer NOT NULL,
+                team_id integer NULL    ,
+                seasons   text NULL,
+                first_name text NULL,
+                last_name text NULL,
+                team_name text NULL,
+                team_abbrv text NULL,
+                wins integer NULL,
+                headshot_url text NULL,
+                teamlogo_url text NULL
+            );
+        '''
+        return query
     #---------------------------------
     def register_api_urls(self)->list:
         try:
@@ -218,7 +236,8 @@ class nhl_etl_manager:
             #self.run_team_roster_pipeline()
             #self.run_games_pipeline()
             #self.run_game_player_stats_pipeline()
-            self.run_game_box_score_pipeline()
+            #self.run_game_box_score_pipeline()
+            self.run_goaltending_win_leaders_pipeline()
         except Exception as e:
             self._log.error(f"run_data_extraction_process: An error occurred while running the data extraction process: {e}")
             raise Exception(f"An error occurred while running the data extraction process: {e}")
@@ -572,8 +591,9 @@ class nhl_etl_manager:
     # Game Player Stats Pipeline
     def run_game_player_stats_pipeline(self):
         try:
+            current_year = self.__getCurrentYear()
             # get game ids from games table.
-            game_ids = self._dbManager.execute_fetch("select id from games where year=2026 and month in (4,5);")
+            game_ids = self._dbManager.execute_fetch(f"select id from games where year={current_year} and month in (4,5,6);")
 
             # extract game player stats data from NHL API
             jsonDataList = []
@@ -835,7 +855,7 @@ class nhl_etl_manager:
     def run_game_box_score_pipeline(self):
         try:
             # get game ids from games table.
-            game_dates = self._dbManager.execute_fetch("select  distinct gameDate from games where year=2026 and month in (4,5);")
+            game_dates = self._dbManager.execute_fetch(f"select  distinct gameDate from games where year={self.__getCurrentYear()} and month in (4,5,6);")
 
             # extract game player stats data from NHL API
             jsonDataList = []
@@ -902,6 +922,78 @@ class nhl_etl_manager:
             self._log.error(f"load_game_box_scores_info: An error occurred while loading game box scores info: {e}")
             raise Exception(f"An error occurred while loading game box scores info: {e}")
     #---------------------------------
+    # Goaltending Win Leaders Pipeline
+    def run_goaltending_win_leaders_pipeline(self):
+        try:
+            current_year = self.__getCurrentYear()
+            season = f"{current_year-1}{str(current_year)}"
+            # extract goaltending win leaders data from NHL API
+            jsonData = self.extract_goaltending_win_leaders_info(f"https://api-web.nhle.com/v1/goalie-stats-leaders/{season}/3?categories=wins&limit=100")
+
+            # transform json data into list of models
+            transformedData = self.transform_goaltending_win_leaders_info(jsonData)
+
+            # save model data to database
+            self.load_goaltending_win_leaders_info(transformedData)
+
+        except Exception as e:
+            self._log.error(f"run_goaltending_win_leaders_pipeline: An error occurred while running the goaltending win leaders pipeline: {e}")
+            raise Exception(f"An error occurred while running the goaltending win leaders pipeline: {e}")
+
+    def extract_goaltending_win_leaders_info(self, url:str ):
+        try:
+            extracted_data = self._apiClient.fetch_nhl_data_with_url(url)
+            return extracted_data
+        except Exception as e:
+            self._log.error(f"extract_goaltending_win_leaders_info: An error occurred while extracting goaltending win leaders info: {e}")
+            raise Exception(f"An error occurred while extracting goaltending win leaders info: {e}")
+
+    def transform_goaltending_win_leaders_info(self, extractedData: list) -> list:
+        try:
+            transformed_data = []
+            current_year = self.__getCurrentYear()
+            currentSeason = f"{current_year-1}{str(current_year)}"
+            for item in extractedData['wins']:
+                playerID = item['id']
+                season = currentSeason
+                playerDetails = self.__getTeamPlayerDetails(playerID)
+                print(playerDetails)
+                first_name = playerDetails[0]
+                last_name = playerDetails[1]
+                headshot_url = playerDetails[2]
+                team_name = playerDetails[3]
+                team_abbrv = playerDetails[4]
+                teamlogo_url = playerDetails[5]
+                team_id = playerDetails[6]
+                wins = item['value']
+                goaltendingWinLeaderModel = nhl_goaltending_win_leader(player_id=playerID, team_id=team_id, seasons=season, first_name=first_name, last_name=last_name, team_name=team_name, team_abbrv=team_abbrv, wins=wins, headshot_url=headshot_url, teamlogo_url=teamlogo_url)
+                transformed_data.append(goaltendingWinLeaderModel)
+
+            return transformed_data
+        except Exception as e:
+            self._log.error(f"transform_goaltending_win_leaders_info: An error occurred while transforming goaltending win leaders info: {e}")
+            raise Exception(f"An error occurred while transforming goaltending win leaders info: {e}")
+
+    def load_goaltending_win_leaders_info(self, transformedData: list):
+        try:
+            self.clear_table("goalie_wins_leaders")
+            for goaltendingWinLeaderModel in transformedData:
+                print(goaltendingWinLeaderModel)
+                query = '''
+                    INSERT INTO goalie_wins_leaders (player_id, team_id, seasons, first_name, last_name, team_name, team_abbrv, wins, headshot_url, teamlogo_url)
+                    VALUES ({player_id}, {team_id}, '{seasons}', '{first_name}', '{last_name}', '{team_name}', '{team_abbrv}', {wins}, '{headshot_url}', '{teamlogo_url}');
+                '''.format(player_id=goaltendingWinLeaderModel.player_id, team_id=goaltendingWinLeaderModel.team_id, seasons=goaltendingWinLeaderModel.seasons, first_name=goaltendingWinLeaderModel.first_name.replace("'", "''"), last_name=goaltendingWinLeaderModel.last_name.replace("'", "''"), team_name=goaltendingWinLeaderModel.team_name.replace("'", "''"), team_abbrv=goaltendingWinLeaderModel.team_abbrv.replace("'", "''"), wins=goaltendingWinLeaderModel.wins, headshot_url=goaltendingWinLeaderModel.headshot_url.replace("'", "''"), teamlogo_url=goaltendingWinLeaderModel.teamlogo_url.replace("'", "''"))
+                result = self._dbManager.execute_query(query)
+                if not result:
+                    self._log.error(f"Failed to insert goaltending win leader data for player: {goaltendingWinLeaderModel.first_name} {goaltendingWinLeaderModel.last_name}")
+                    exit(1)
+                else:
+                    self._log.info(f"Goaltending win leader data inserted successfully for player: {goaltendingWinLeaderModel.first_name} {goaltendingWinLeaderModel.last_name}")
+        except Exception as e:
+            self._log.error(f"load_goaltending_win_leaders_info: An error occurred while loading goaltending win leaders info: {e}")
+            raise Exception(f"An error occurred while loading goaltending win leaders info: {e}")
+
+    # ---------------------------------
     def clear_table(self, table_name: str = "seasons") -> bool:
         try:
             query = f"DELETE FROM {table_name};"
@@ -915,3 +1007,22 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"clear_table: An error occurred while clearing {table_name} table: {e}")
             raise Exception(f"An error occurred while clearing {table_name} table: {e}")
+    def __getCurrentYear(self):
+        return datetime.datetime.now().year
+    def __getTeamPlayerDetails(self, PlayerID: int) -> list:
+        try:
+            query =  f"""
+                select player.first_name, player.last_name, player.headshot_url, team. name, team.abbrv, team.logo_url, team.id as team_id
+                from team_roster teamRoster inner join players player on player.id = teamRoster.player_id
+                                                                            inner join teams team on team.id = teamRoster.team_id
+                where player_id = {PlayerID}
+            """
+            result = self._dbManager.execute_fetch(query)
+            if not result:
+                self._log.warning(f"No player details found for player ID: {PlayerID}")
+                return None
+            else:
+                return result[0]
+        except Exception as e:
+            self._log.error(f"__getTeamPlayerDetails: An error occurred while fetching team and player details for player ID {PlayerID}: {e}")
+            raise Exception(f"An error occurred while fetching team and player details for player ID {PlayerID}: {e}")

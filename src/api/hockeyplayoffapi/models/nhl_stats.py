@@ -58,3 +58,15 @@ class nhl_goaltending_gaa_leaders(SQLModel, table=False):
     team_name: str
     team_abbrv: str
     team_logo: str
+
+class nhl_goaltending_wins_leaders(SQLModel, table=False):
+    player_id: int
+    wins: int
+    league_ranking: int
+    player_firstname:str
+    player_lastname:str
+    player_headshot:str
+    player_position:str
+    team_name: str
+    team_abbrv: str
+    team_logo: str
