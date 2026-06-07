@@ -1,19 +1,27 @@
+
+from datetime import timedelta
+from datetime import date
+from typing import Optional, Union
 import sqlite3
 
 from dns import query
+# pyrefly: ignore [untyped-import]
 from requests import models
 import datetime
-from src.data.hockeyplayoffetl.models.nhl_models import DynamicObject, game, gameboxscore, nhl_team, player, playergamestats, season, teamroster,nhl_goaltending_win_leader
+#from src.data.hockeyplayoffetl.models.nhl_models import DynamicObject, game, gameboxscore, nhl_team, player, playergamestats, season, teamroster,nhl_goaltending_win_leader
+from ..models.nhl_models import DynamicObject, game,nhl_game_score, gameboxscore, nhl_team, player, playergamestats, season, teamroster,nhl_goaltending_win_leader
 from .nhl_api_client import nhl_api_client
 from .nhl_db_manager import nhl_db_manager
 from ..utils.utility_manager import utility_manager
 from ..models.api_url_models import api_url_request, api_url_response
 class nhl_etl_manager:
-    _apiClient: nhl_api_client = None
-    _dbManager: nhl_db_manager = None
+    # pyrefly: ignore [bad-assignment]
+    _apiClient: Optional[nhl_api_client]# Optional[nhl_api_client] = None
+    _dbManager: Optional[nhl_db_manager]
     _displayConsoleLogs: bool = True
-    _logWrapper: utility_manager = None
-    _log: any = None
+    _logWrapper: Optional[utility_manager]
+    # pyrefly: ignore [not-a-type]
+    _log: Union[any, None]
     def __init__(self, apiClient, dbManager, displayConsoleLogs: bool = True):
         self._displayConsoleLogs = displayConsoleLogs
         self._apiClient = apiClient
@@ -32,7 +40,8 @@ class nhl_etl_manager:
                 self.__get_players_query,
                 self.__get_seasons_query,
                 self.__get_player_game_stats_query,
-                self.__get_goalie_wins_leaders_query
+                self.__get_goalie_wins_leaders_query,
+                self.__get_nhl_scores_query
             ]
             for method in query_methods:
                 query = method()
@@ -214,6 +223,34 @@ class nhl_etl_manager:
             );
         '''
         return query
+    def __get_nhl_scores_query(self) -> str:
+        query = '''
+            CREATE TABLE IF NOT EXISTS nhl_scores (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        date TEXT NOT NULL,
+                        home_team TEXT NOT NULL,
+                        home_team_image TEXT NOT NULL,
+                        away_team TEXT NOT NULL,
+                        away_team_image TEXT NOT NULL,
+                        home_score INTEGER NOT NULL,
+                        away_score INTEGER NOT NULL,
+                        first_period_home_score integer not null,
+                        second_period_home_score integer not null,
+                        third_period_home_score integer not null,
+                        overtime_home_score integer not null,
+                        final_home_score integer not null,
+                        first_period_away_score integer not null,
+                        second_period_away_score integer not null,
+                        third_period_away_score integer not null,
+                        overtime_away_score integer not null,
+                        final_away_score integer not null,
+                        round text not null,
+                        game_number integer not null,
+                        series_info text not null,
+                        DateCreated DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        '''
+        return query
     #---------------------------------
     def register_api_urls(self)->list:
         try:
@@ -237,8 +274,10 @@ class nhl_etl_manager:
             #self.run_games_pipeline()
             #self.run_game_player_stats_pipeline()
             #self.run_game_box_score_pipeline()
-            self.run_goaltending_win_leaders_pipeline()
+            #self.run_goaltending_win_leaders_pipeline()
+            self.run_nhl_scores_pipeline()
         except Exception as e:
+            # pyrefly: ignore [missing-attribute]
             self._log.error(f"run_data_extraction_process: An error occurred while running the data extraction process: {e}")
             raise Exception(f"An error occurred while running the data extraction process: {e}")
     # ---------------------------------
@@ -611,7 +650,6 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"run_game_player_stats_pipeline: An error occurred while running the game player stats pipeline: {e}")
             raise Exception(f"An error occurred while running the game player stats pipeline: {e}")
-
     def extract_game_player_stats_info(self, url:str ):
         try:
             extracted_data = self._apiClient.fetch_nhl_data_with_url(url)
@@ -619,7 +657,6 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"extract_game_player_stats_info: An error occurred while extracting game player stats info: {e}")
             raise Exception(f"An error occurred while extracting game player stats info: {e}")
-
     def transform_game_player_stats_info(self, games: list) -> list:
         try:
             transformed_data = []
@@ -829,7 +866,6 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"transform_game_player_stats_info: An error occurred while transforming game player stats info: {e}")
             raise Exception(f"An error occurred while transforming game player stats info: {e}")
-
     def load_game_player_stats_info(self, transformedData: list):
         try:
             self.clear_table("player_game_stats")
@@ -953,6 +989,7 @@ class nhl_etl_manager:
             transformed_data = []
             current_year = self.__getCurrentYear()
             currentSeason = f"{current_year-1}{str(current_year)}"
+            # pyrefly: ignore [bad-index]
             for item in extractedData['wins']:
                 playerID = item['id']
                 season = currentSeason
@@ -994,6 +1031,153 @@ class nhl_etl_manager:
             raise Exception(f"An error occurred while loading goaltending win leaders info: {e}")
 
     # ---------------------------------
+    # ---------------------------------
+    # NHL Scores Pipeline
+    def run_nhl_scores_pipeline(self):
+        try:
+            nhlGameDates = self.__getNHLPlayoffGameDates()
+            nhlGameScores = []
+            for nhlGameDate in nhlGameDates:
+                jsonData = self.extract_nhl_scores_info(f"https://api-web.nhle.com/v1/score/{nhlGameDate}")
+                if jsonData is not None:
+                    nhlGameScores.append(jsonData)
+                else:
+                    self._log.warning(f"No NHL scores data found for game date: {nhlGameDate}")
+            transformedData = self.transform_nhl_scores_info(nhlGameScores)
+            self.load_nhl_scores_info(transformedData)
+        except Exception as e:
+            self._log.error(f"run_nhl_scores_pipeline: An error occurred while running the NHL scores pipeline: {e}")
+            raise Exception(f"An error occurred while running the NHL scores pipeline: {e}")
+
+    def extract_nhl_scores_info(self, url:str ):
+        try:
+            extracted_data = self._apiClient.fetch_nhl_data_with_url(url)
+            return extracted_data
+        except Exception as e:
+            self._log.error(f"extract_nhl_scores_info: An error occurred while extracting NHL scores info: {e}")
+            raise Exception(f"An error occurred while extracting NHL scores info: {e}")
+
+    def transform_nhl_scores_info(self, GameBoxScores: list) -> list:
+        try:
+            transformed_data = []
+
+            for gameBoxScore in GameBoxScores:
+                if 'games' not in gameBoxScore or gameBoxScore['games'] is None:
+                    print('No Game Object.')
+                numberOfGames = len(gameBoxScore['games'])
+
+                if numberOfGames > 0:
+                    for i in range(numberOfGames):
+                        game_score= nhl_game_score()
+                        game_score.game_date = gameBoxScore['games'][i]['gameDate']
+                        game_score.home_team = gameBoxScore['games'][i]['homeTeam']['name']['default']
+                        game_score.home_team_image = gameBoxScore['games'][i]['homeTeam']['logo']
+                        game_score.away_team = gameBoxScore['games'][i]['awayTeam']['name']['default']
+                        game_score.away_team_image = gameBoxScore['games'][i]['awayTeam']['logo']
+
+                        if('score' in gameBoxScore['games'][i]['homeTeam']):
+                            game_score.home_score = gameBoxScore['games'][i]['homeTeam']['score']
+                        else:
+                            game_score.home_score = 0
+
+                        if('score' in gameBoxScore['games'][i]['awayTeam']):
+                            game_score.away_score = gameBoxScore['games'][i]['awayTeam']['score']
+                        else:
+                            game_score.away_score = 0
+
+                        # Series info
+                        game_score.round = gameBoxScore['games'][i]['seriesStatus']['round']
+                        game_score.game_number = gameBoxScore['games'][i]['seriesStatus']['gameNumberOfSeries']
+                        neededToWinSeries = gameBoxScore['games'][i]['seriesStatus']['neededToWin']
+                        game_score.series_info = ""
+                        topSeedWins = gameBoxScore['games'][i]['seriesStatus']['topSeedWins']
+                        bottomSeedWins = gameBoxScore['games'][i]['seriesStatus']['bottomSeedWins']
+                        topSeedName = gameBoxScore['games'][i]['seriesStatus']['topSeedTeamAbbrev']
+                        bottomSeedName = gameBoxScore['games'][i]['seriesStatus']['bottomSeedTeamAbbrev']
+                        if(topSeedWins == 0 and bottomSeedWins == 0):
+                            game_score.series_info = "Series has not started"
+                        elif(topSeedWins > bottomSeedWins and topSeedWins < neededToWinSeries):
+                            game_score.series_info = ""+topSeedName+" leads series "+str(topSeedWins)+"-"+str(bottomSeedWins)+""
+                        elif(topSeedWins > bottomSeedWins and topSeedWins == neededToWinSeries):
+                            game_score.series_info = ""+topSeedName+" wins series "+str(topSeedWins)+"-"+str(bottomSeedWins)+""
+                        elif(bottomSeedWins > topSeedWins and bottomSeedWins == neededToWinSeries):
+                            game_score.series_info = ""+bottomSeedName+" wins series "+str(bottomSeedWins)+"-"+str(topSeedWins)+""
+                        elif(bottomSeedWins > topSeedWins and bottomSeedWins < neededToWinSeries):
+                            game_score.series_info = ""+bottomSeedName+" leads series "+str(bottomSeedWins)+"-"+str(topSeedWins)+""
+                        elif(topSeedWins == bottomSeedWins):
+                                game_score.series_info = "Series is tied "+str(topSeedWins)+"-"+str(bottomSeedWins)+""
+
+                        # game_score.away_score = results['games'][i]['awayTeam']['score']
+                        goalsCount = len(gameBoxScore['games'][i]['goals'])
+                        game_score.first_period_home_score = 0
+                        game_score.first_period_away_score = 0
+                        game_score.second_period_home_score = 0
+                        game_score.second_period_away_score = 0
+                        game_score.third_period_home_score = 0
+                        game_score.third_period_away_score = 0
+                        game_score.overtime_home_score = 0
+                        game_score.overtime_away_score = 0
+                        for goal in range(goalsCount):
+                            goalItem = gameBoxScore['games'][i]['goals'][goal]
+                            period = goalItem['period']
+                            homeTeamAbbrv = gameBoxScore['games'][i]['homeTeam']['abbrev']
+                            awayTeamAbbrv = gameBoxScore['games'][i]['awayTeam']['abbrev']
+                            if (period== 1):
+                                if(homeTeamAbbrv == goalItem['teamAbbrev']):
+                                   game_score.first_period_home_score += 1
+                                elif(awayTeamAbbrv == goalItem['teamAbbrev']):
+                                     game_score.first_period_away_score += 1
+                            elif (period== 2):
+                                if(homeTeamAbbrv == goalItem['teamAbbrev']):
+                                    game_score.second_period_home_score += 1
+                                elif(awayTeamAbbrv == goalItem['teamAbbrev']):
+                                    game_score.second_period_away_score += 1
+
+                            elif (period== 3):
+                                if(homeTeamAbbrv == goalItem['teamAbbrev']):
+                                    game_score.third_period_home_score += 1
+                                elif(awayTeamAbbrv == goalItem['teamAbbrev']):
+                                    game_score.third_period_away_score += 1
+                            elif (period== 4):
+                                if(homeTeamAbbrv == goalItem['teamAbbrev']):
+                                    game_score.overtime_home_score += 1
+                                elif(awayTeamAbbrv == goalItem['teamAbbrev']):
+                                    game_score.overtime_away_score += 1
+                        game_score.final_home_score = gameBoxScore['games'][i]['homeTeam']['score']
+                        game_score.final_away_score = gameBoxScore['games'][i]['awayTeam']['score']
+                        transformed_data.append(game_score)
+
+            return transformed_data
+        except Exception as e:
+            self._log.error(f"transform_nhl_scores_info: An error occurred while transforming NHL scores info: {e}")
+            raise Exception(f"An error occurred while transforming NHL scores info: {e}")
+    def load_nhl_scores_info(self, transformedData: list[nhl_game_score]):
+        try:
+            self.clear_table("nhl_scores")
+            for nhlScoreModel in transformedData:
+                print(nhlScoreModel)
+                query = '''
+                    insert into nhl_scores(date,home_team,home_team_image,away_team,away_team_image,home_score,away_score,
+                                              first_period_home_score,second_period_home_score,third_period_home_score,overtime_home_score,
+                                              final_home_score,first_period_away_score,second_period_away_score,third_period_away_score,
+                                              overtime_away_score,final_away_score,round,game_number,series_info)
+                    VALUES ('{date}', '{home_team}', '{home_team_image}', '{away_team}', '{away_team_image}', {home_score}, {away_score},
+                            {first_period_home_score}, {second_period_home_score}, {third_period_home_score}, {overtime_home_score},
+                            {final_home_score}, {first_period_away_score}, {second_period_away_score}, {third_period_away_score},
+                            {overtime_away_score}, {final_away_score}, '{round}', {game_number}, '{series_info}');
+                '''.format(date=nhlScoreModel.game_date, home_team=nhlScoreModel.home_team.replace("'", "''"), home_team_image=nhlScoreModel.home_team_image.replace("'", "''"), away_team=nhlScoreModel.away_team.replace("'", "''"), away_team_image=nhlScoreModel.away_team_image.replace("'", "''"), home_score=nhlScoreModel.home_score, away_score=nhlScoreModel.away_score, first_period_home_score=nhlScoreModel.first_period_home_score, second_period_home_score=nhlScoreModel.second_period_home_score, third_period_home_score=nhlScoreModel.third_period_home_score, overtime_home_score=nhlScoreModel.overtime_home_score, final_home_score=nhlScoreModel.final_home_score, first_period_away_score=nhlScoreModel.first_period_away_score, second_period_away_score=nhlScoreModel.second_period_away_score, third_period_away_score=nhlScoreModel.third_period_away_score, overtime_away_score=nhlScoreModel.overtime_away_score, final_away_score=nhlScoreModel.final_away_score, round=nhlScoreModel.round, game_number=nhlScoreModel.game_number, series_info=nhlScoreModel.series_info.replace("'", "''"))
+                result = self._dbManager.execute_query(query)
+                if not result:
+                    self._log.error(f"Failed to insert NHL score data for game: {nhlScoreModel.home_team} vs {nhlScoreModel.away_team} on {nhlScoreModel.game_date}")
+                    exit(1)
+                else:
+                    self._log.info(f"NHL score data inserted successfully for game: {nhlScoreModel.home_team} vs {nhlScoreModel.away_team} on {nhlScoreModel.game_date}")
+        except Exception as e:
+            self._log.error(f"load_nhl_scores_info: An error occurred while loading NHL scores info: {e}")
+            raise Exception(f"An error occurred while loading NHL scores info: {e}")
+
+    # ---------------------------------
+    # Helper Methods
     def clear_table(self, table_name: str = "seasons") -> bool:
         try:
             query = f"DELETE FROM {table_name};"
@@ -1026,3 +1210,26 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"__getTeamPlayerDetails: An error occurred while fetching team and player details for player ID {PlayerID}: {e}")
             raise Exception(f"An error occurred while fetching team and player details for player ID {PlayerID}: {e}")
+    def __getNHLPlayoffGameDates(self):
+            #Target end date (inclusive)
+            target_date = date(2026, 4, 18)
+            # Current date
+            current_date = date.today()- timedelta(days=1)
+
+            # Ensure we are not asking for a future date
+            if current_date < target_date:
+
+                return []
+            else:
+                # Generate list of dates
+                delta = current_date - target_date
+                date_list = []
+                for i in range(delta.days + 1):
+                    day = target_date + timedelta(days=i)
+                    date_list.append(day.strftime("%Y-%m-%d"))
+
+            # Print results
+            # for d in date_list:
+            #     print(d)
+
+            return date_list

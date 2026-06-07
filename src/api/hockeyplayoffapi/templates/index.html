@@ -57,7 +57,7 @@
             const nhlScoreDateSelect = document.getElementById('nhlScoreDateSelect');
             // create options elements for dates starting from April 18, 2026 to May 26, 2026
             const startDate = new Date('2026-04-18');
-            const endDate = new Date('2026-05-26');
+            const endDate = new Date('2026-06-30');
             for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
                 const option = document.createElement('option');
                 option.value = date.toISOString().split('T')[0]; // format date as YYYY-MM-DD
