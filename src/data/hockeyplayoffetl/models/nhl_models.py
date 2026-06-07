@@ -129,6 +129,22 @@ class nhl_game_score:
     game_number:int=0
     series_info:str=""
 
+@dataclass
+class nhl_playoff_schedule:
+      game_date:str=""
+      start_time:str=""
+      year:int=0
+      month:int=0
+      day:int=0
+      homeTeamID:int=0
+      awayTeamID:int=0
+      homeTeamScore:int=0
+      awayTeamScore:int=0
+      seriesInfo:str=""
+      topSeedsWin:str=""
+      bottomSeedsWin:str=""
+      round:str=""
+      seriesTitle:str=""
 class DynamicObject:
       def __init__(self, **kwargs):
           for key, value in kwargs.items():

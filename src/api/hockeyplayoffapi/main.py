@@ -1,3 +1,4 @@
+
 from typing import Annotated, Union
 from fastapi import Depends, FastAPI, HTTPException, Query, Request,Header
 from httpx import request
@@ -8,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
-from .models.nhl_teams import nhl_teams, teams
+from .models.nhl_teams import nhl_teams, teams,nhl_playoff_dates
 from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_goaltending_wins_leaders, nhl_plusminus_leaders, nhl_points_leaders
 print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get('DOCKER_ENV'):
@@ -110,16 +111,22 @@ async def get_nhl_stats(session: SessionDep, request:Request, teams: int=0):
                                                      "goalieGAARanks": goalieGAARanks,
                                                      "goalieWinsRanks": goalieWins})
 
+@app.get("/get_playoff_game_dates", response_class=JSONResponse)
+def get_avaliable_nhl_playoff_game_dates(session: SessionDep)-> list[nhl_playoff_dates]:
+    sqlStmt = text("select distinct date  from nhl_scores  order by date desc")
+    results = session.execute(sqlStmt)
+    rows = results.mappings().all()
+    gameDates: list[nhl_playoff_dates] = [nhl_playoff_dates(**row) for row in rows]
 
+    return JSONResponse(content=jsonable_encoder(gameDates))
 
 def get_nhl_teams(session: SessionDep)-> list[nhl_teams]:
     sqlStmt = text("select id, name as team_name from teams order by name")
-
     results = session.execute(sqlStmt)
     rows = results.mappings().all()
-    teamList = [teams(**row) for row in rows]
-
+    teamList: list[teams] = [teams(**row) for row in rows]
     return teamList
+
 def get_nhl_goal_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goal_leaders]:
           print(f"Getting NHL Goal Leaders for Team: {TeamName}")
           if(TeamName != 0):

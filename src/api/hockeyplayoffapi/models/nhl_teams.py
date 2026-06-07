@@ -5,3 +5,5 @@ class nhl_teams(SQLModel, table=True):
 class teams(SQLModel, table=False):
     id: int
     team_name: str
+class nhl_playoff_dates(SQLModel, table=False):
+    date: str

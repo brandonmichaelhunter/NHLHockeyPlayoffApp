@@ -33,7 +33,11 @@
         </div>
         <div id="nhlscorestablessection" class="container-fluid">
             <div id="dateselect">
-                <select id="nhlScoreDateSelect" name="nhlScoreDateSelect" hx-get="/nhl_scores" hx-target="#nhlScores" hx-trigger="change">
+                <select id="nhlScoreDateSelect"
+                name="nhlScoreDateSelect"
+                hx-get="/nhl_scores"
+                hx-target="#nhlScores"
+                hx-trigger="change">
                     <option value="">Select a Game Date</option>
                 </select>
                 <!-- Add NHL Teams Select List.-->
@@ -52,21 +56,26 @@
 
     <!-- <script src="https://jsdelivr.net" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script> -->
     <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', () => {
-            // get an instance of the select element
-            const nhlScoreDateSelect = document.getElementById('nhlScoreDateSelect');
-            // create options elements for dates starting from April 18, 2026 to May 26, 2026
-            const startDate = new Date('2026-04-18');
-            const endDate = new Date('2026-06-30');
-            for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
-                const option = document.createElement('option');
-                option.value = date.toISOString().split('T')[0]; // format date as YYYY-MM-DD
-                option.textContent = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); // format date as "Month Day, Year"
-                nhlScoreDateSelect.appendChild(option);
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // get an instance of the select element
+                const response = await fetch('/get_playoff_game_dates');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const gameDates = await response.json();
+                console.log(gameDates);
+                const nhlScoreDateSelect = document.getElementById('nhlScoreDateSelect');
+                gameDates.forEach((gameDate) => {
+                    const option = document.createElement('option');
+                    option.value  = gameDate.date;
+                    option.textContent = gameDate.date;
+                    nhlScoreDateSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching playoff game dates:', error);
             }
         });
-
-
     </script>
 </body>
 </html>

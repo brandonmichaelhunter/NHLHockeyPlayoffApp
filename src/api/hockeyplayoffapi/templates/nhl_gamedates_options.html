@@ -1,0 +1,5 @@
+<!-- templates/nhl_gamedates_options.html -->
+ <option value="">Select a Game Date</option>
+{% for gameDate in gameDates %}
+<option value="{{ gameDate.date }}">{{ gameDate.date }}</option>
+{% endfor %}
