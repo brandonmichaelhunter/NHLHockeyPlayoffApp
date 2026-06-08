@@ -9,17 +9,17 @@ from dns import query
 from requests import models
 import datetime
 #from src.data.hockeyplayoffetl.models.nhl_models import DynamicObject, game, gameboxscore, nhl_team, player, playergamestats, season, teamroster,nhl_goaltending_win_leader
-from ..models.nhl_models import DynamicObject, game,nhl_game_score, gameboxscore, nhl_team, player, playergamestats, season, teamroster,nhl_goaltending_win_leader
+from ..models.nhl_models import DynamicObject, game,nhl_game_score, gameboxscore, nhl_playoff_schedule, nhl_team, player, playergamestats, season, teamroster,nhl_goaltending_win_leader
 from .nhl_api_client import nhl_api_client
 from .nhl_db_manager import nhl_db_manager
 from ..utils.utility_manager import utility_manager
 from ..models.api_url_models import api_url_request, api_url_response
 class nhl_etl_manager:
     # pyrefly: ignore [bad-assignment]
-    _apiClient: Optional[nhl_api_client]# Optional[nhl_api_client] = None
-    _dbManager: Optional[nhl_db_manager]
+    _apiClient: Optional[nhl_api_client] = None
+    _dbManager: Optional[nhl_db_manager] = None
     _displayConsoleLogs: bool = True
-    _logWrapper: Optional[utility_manager]
+    _logWrapper: Optional[utility_manager] = None
     # pyrefly: ignore [not-a-type]
     _log: Union[any, None]
     def __init__(self, apiClient, dbManager, displayConsoleLogs: bool = True):
@@ -41,14 +41,15 @@ class nhl_etl_manager:
                 self.__get_seasons_query,
                 self.__get_player_game_stats_query,
                 self.__get_goalie_wins_leaders_query,
-                self.__get_nhl_scores_query
+                self.__get_nhl_scores_query,
+                self.__get_nhl_playoff_schedule_games_query
             ]
             for method in query_methods:
                 query = method()
                 table_name = method.__name__.replace('__get_', '').replace('_query', '')
                 self._log.info(f"Creating table: {table_name}...")
 
-                result = self._dbManager.execute_query(query)
+                result:bool = self._dbManager.execute_query(query)
                 if not result:
                     self._log.error(f"Failed to create table: {table_name}")
                     # Optionally, you could raise an exception here
@@ -251,6 +252,34 @@ class nhl_etl_manager:
             );
         '''
         return query
+    def __get_nhl_playoff_schedule_games_query(self) -> str:
+        query = '''
+            CREATE TABLE IF NOT EXISTS nhl_playoff_schedule_games (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        gameID INTEGER NULL,
+                        seasonID INTEGER NULL,
+                        game_date TEXT NULL,
+                        start_time TEXT NULL,
+                        homeTeamID INTEGER NULL,
+                        homeTeamScore INTEGER NULL,
+                        awayTeamID INTEGER NULL,
+                        awayTeamScore INTEGER NULL,
+                        topSeedsWin TEXT NULL,
+                        topSeedsTeamID INTEGER NULL,
+                        bottomSeedsWin TEXT NULL,
+                        bottomSeedsTeamID INTEGER NULL,
+                        seriesTitle TEXT NULL,
+                        round TEXT NULL,
+                        stationInfo TEXT NULL,
+                        gameNumberOfSeries TEXT NULL,
+                        winningGoaliePlayerID INTEGER NULL,
+                        winningGoalScorerPlayerID INTEGER NULL,
+                        venueName TEXT NULL,
+                        periods INTEGER NULL,
+                        DateCreated DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        '''
+        return query
     #---------------------------------
     def register_api_urls(self)->list:
         try:
@@ -268,14 +297,15 @@ class nhl_etl_manager:
 
     def run_data_extraction_process(self):
         try:
-            #self.run_seasons_pipeline()
-            #self.run_teams_pipeline()
-            #self.run_team_roster_pipeline()
-            #self.run_games_pipeline()
-            #self.run_game_player_stats_pipeline()
-            #self.run_game_box_score_pipeline()
-            #self.run_goaltending_win_leaders_pipeline()
+            self.run_seasons_pipeline()
+            self.run_teams_pipeline()
+            self.run_team_roster_pipeline()
+            self.run_games_pipeline()
+            self.run_game_player_stats_pipeline()
+            self.run_game_box_score_pipeline()
+            self.run_goaltending_win_leaders_pipeline()
             self.run_nhl_scores_pipeline()
+            self.run_nhl_playoff_game_schedules_pipeline()
         except Exception as e:
             # pyrefly: ignore [missing-attribute]
             self._log.error(f"run_data_extraction_process: An error occurred while running the data extraction process: {e}")
@@ -765,7 +795,7 @@ class nhl_etl_manager:
                         saveShotsAgainst=saveShotsAgainst,savePctg=savePctg,evenStrengthGoalsAgainst=evenStrengthGoalsAgainst,powerPlayGoalsAgainst=powerPlayGoalsAgainst,shorthandedGoalsAgainst=shorthandedGoalsAgainst,
                         goalsAgainst=goalsAgainst,shotsAgainst=shotsAgainst,saves=saves,toi=toi)
                     transformed_data.append(playerGameStatsModel)
-                print('home team - forwards')
+
                 for homeTeam in game['playerByGameStats']['homeTeam']['forwards']:
                     playerId = homeTeam['playerId']
                     position = homeTeam['position']
@@ -794,7 +824,7 @@ class nhl_etl_manager:
                         saveShotsAgainst='',savePctg=0,evenStrengthGoalsAgainst=0,powerPlayGoalsAgainst=0,shorthandedGoalsAgainst=0,
                         goalsAgainst=0,shotsAgainst=0,saves=0,toi=toi)
                     transformed_data.append(playerGameStatsModel)
-                print('home team - defense')
+
                 for homeTeam in game['playerByGameStats']['homeTeam']['defense']:
                     playerId = homeTeam['playerId']
                     position = homeTeam['position']
@@ -1175,7 +1205,114 @@ class nhl_etl_manager:
         except Exception as e:
             self._log.error(f"load_nhl_scores_info: An error occurred while loading NHL scores info: {e}")
             raise Exception(f"An error occurred while loading NHL scores info: {e}")
+    # ---------------------------------
+    # NHL Playoff Game Schedule Pipeline
+    def run_nhl_playoff_game_schedules_pipeline(self):
+        try:
+            nhlGameDates = self.__getNHLPlayoffGameDates()
+            nhlGameSchedules = []
+            for nhlGameDate in nhlGameDates:
+                jsonData = self.extract_nhl_playoff_game_schedules_info(f"https://api-web.nhle.com/v1/schedule/{nhlGameDate}")
+                if jsonData is not None:
+                    nhlGameSchedules.append(jsonData)
+                else:
+                    self._log.warning(f"No NHL game schedules data found for game date: {nhlGameDate}")
+            transformedData:list[nhl_playoff_schedule] = self.transform_nhl_playoff_game_schedules_info(nhlGameSchedules)
+            self.load_nhl_playoff_game_schedules_info(transformedData)
+        except Exception as e:
+            self._log.error(f"run_nhl_playoff_game_schedules_pipeline: An error occurred while running the NHL playoff game schedules pipeline: {e}")
+            raise Exception(f"An error occurred while running the NHL playoff game schedules pipeline: {e}")
+    def extract_nhl_playoff_game_schedules_info(self, url:str ):
+        try:
+            extracted_data = self._apiClient.fetch_nhl_data_with_url(url)
+            return extracted_data
+        except Exception as e:
+            self._log.error(f"extract_nhl_playoff_game_schedules_info: An error occurred while extracting NHL playoff game schedules info: {e}")
+            raise Exception(f"An error occurred while extracting NHL playoff game schedules info: {e}")
+    def transform_nhl_playoff_game_schedules_info(self, GameSchedules: list) -> list[nhl_playoff_schedule]:
+        try:
+            transformed_data:list[nhl_playoff_schedule] = []
 
+            for gameSchedule in GameSchedules:
+                gameWeekItem = gameSchedule['gameWeek']
+                numberOfGameWeeks = len(gameWeekItem)
+                counter = 1
+                for counter in range(numberOfGameWeeks):
+                    gameDate = gameWeekItem[counter]['date']
+                    numberOfGamesThisWeek = gameWeekItem[counter]['numberOfGames']
+                    if(numberOfGamesThisWeek > 0):
+                       secondaryCounter:int = 0
+                       for secondaryCounter in range(numberOfGamesThisWeek):
+                           games = gameWeekItem[counter]['games'][secondaryCounter]
+                           start_time = games['startTimeUTC']
+                           gameID = games['id']
+                           seasonID = games['season']
+                           homeTeamID = games['homeTeam']['id']
+                           homeTeamAbbrv = games['homeTeam']['abbrev']
+                           if 'score' in games['homeTeam'] and games['homeTeam']['score'] is not None:
+                               homeTeamScore = games['homeTeam']['score']
+                           else:
+                               homeTeamScore = 0
+                           awayTeamID = games['awayTeam']['id']
+                           awayTeamAbbrv = games['awayTeam']['abbrev']
+                           if 'score' in games['awayTeam'] and games['awayTeam']['score'] is not None:
+                               awayTeamScore = games['awayTeam']['score']
+                           else:
+                               awayTeamScore = 0
+
+                           topSeedsWin:str=games['seriesStatus']['topSeedWins']
+                           bottomSeedsWin:str=games['seriesStatus']['bottomSeedWins']
+                           topSeedsTeamID: int = 0
+                           bottomSeedsTeamID: int = 0
+                           if homeTeamAbbrv == games['seriesStatus']['topSeedTeamAbbrev']:
+                              topSeedsTeamID = homeTeamID
+                              bottomSeedsTeamID = awayTeamID
+                           elif awayTeamAbbrv == games['seriesStatus']['topSeedTeamAbbrev']:
+                              topSeedsTeamID = awayTeamID
+                              bottomSeedsTeamID = homeTeamID
+
+                           seriesTitle:str= games['seriesStatus']['seriesTitle']
+                           round:str=games['seriesStatus']['round']
+                           stationInfo = games['tvBroadcasts'][0]['network']
+                           gameNumberOfSeries:str=games['seriesStatus']['gameNumberOfSeries']
+                           if 'winningGoalie' in games and games['winningGoalie'] is not None:
+                               winningGoaliePlayerID:int=games['winningGoalie']['playerId']
+
+                           if 'winningGoalScorer' in games and games['winningGoalScorer'] is not None:
+                               winningGoalScorerPlayerID:int=games['winningGoalScorer']['playerId']
+                           venueName = games['venue']['default']
+                           periods = games['periodDescriptor']['number']
+
+                           playeroff_game_schedule_item = nhl_playoff_schedule(gameID,seasonID,gameDate,start_time,homeTeamID,homeTeamScore,awayTeamID,
+                                awayTeamScore,topSeedsWin,topSeedsTeamID,bottomSeedsWin,bottomSeedsTeamID,seriesTitle,round,
+                                stationInfo,gameNumberOfSeries,winningGoaliePlayerID,winningGoalScorerPlayerID,venueName,periods)
+                           transformed_data.append(playeroff_game_schedule_item)
+
+            return transformed_data
+        except Exception as e:
+            self._log.error(f"transform_nhl_playoff_game_schedules_info: An error occurred while transforming NHL playoff game schedules info: {e}")
+            raise Exception(f"An error occurred while transforming NHL playoff game schedules info: {e}")
+
+    def load_nhl_playoff_game_schedules_info(self, transformedData: list[nhl_playoff_schedule]):
+        try:
+            self.clear_table("nhl_playoff_schedule_games")
+            for nhlGameScheduleModel in transformedData:
+                print(nhlGameScheduleModel)
+                query = '''
+                    insert into nhl_playoff_schedule_games(gameID,seasonID,game_date,start_time,homeTeamID,homeTeamScore,awayTeamID,awayTeamScore,topSeedsWin,topSeedsTeamID,bottomSeedsWin,bottomSeedsTeamID,seriesTitle,round,stationInfo,gameNumberOfSeries,winningGoaliePlayerID,winningGoalScorerPlayerID,venueName,periods)
+                    VALUES ('{gameID}','{seasonID}','{game_date}','{start_time}','{homeTeamID}','{homeTeamScore}','{awayTeamID}','{awayTeamScore}','{topSeedsWin}','{topSeedsTeamID}','{bottomSeedsWin}','{bottomSeedsTeamID}','{seriesTitle}','{round}','{stationInfo}','{gameNumberOfSeries}','{winningGoaliePlayerID}','{winningGoalScorerPlayerID}','{venueName}','{periods}');
+                '''.format(gameID=nhlGameScheduleModel.gameID, seasonID=nhlGameScheduleModel.seasonID, game_date=nhlGameScheduleModel.game_date, start_time=nhlGameScheduleModel.start_time, homeTeamID=nhlGameScheduleModel.homeTeamID, homeTeamScore=nhlGameScheduleModel.homeTeamScore, awayTeamID=nhlGameScheduleModel.awayTeamID, awayTeamScore=nhlGameScheduleModel.awayTeamScore, topSeedsWin=nhlGameScheduleModel.topSeedsWin, topSeedsTeamID=nhlGameScheduleModel.topSeedsTeamID, bottomSeedsWin=nhlGameScheduleModel.bottomSeedsWin, bottomSeedsTeamID=nhlGameScheduleModel.bottomSeedsTeamID, seriesTitle=nhlGameScheduleModel.seriesTitle, round=nhlGameScheduleModel.round, stationInfo=nhlGameScheduleModel.stationInfo, gameNumberOfSeries=nhlGameScheduleModel.gameNumberOfSeries, winningGoaliePlayerID=nhlGameScheduleModel.winningGoaliePlayerID, winningGoalScorerPlayerID=nhlGameScheduleModel.winningGoalScorerPlayerID, venueName=nhlGameScheduleModel.venueName, periods=nhlGameScheduleModel.periods)
+                result = self._dbManager.execute_query(query)
+                if not result:
+                    self._log.error(f"Failed to insert NHL playoff schedule data for game: {nhlGameScheduleModel.game_date}")
+                    exit(1)
+                else:
+                    self._log.info(f"NHL playoff schedule data inserted successfully for game: {nhlGameScheduleModel.game_date}")
+        except Exception as e:
+            self._log.error(f"load_nhl_playoff_game_schedules_info: An error occurred while loading NHL playoff schedule info: {e}")
+            raise Exception(f"An error occurred while loading NHL playoff schedule info: {e}")
+
+    # ---------------------------------
     # ---------------------------------
     # Helper Methods
     def clear_table(self, table_name: str = "seasons") -> bool:
@@ -1214,6 +1351,7 @@ class nhl_etl_manager:
             #Target end date (inclusive)
             target_date = date(2026, 4, 18)
             # Current date
+            #current_date = date(2026,4,20)
             current_date = date.today()- timedelta(days=1)
 
             # Ensure we are not asking for a future date
