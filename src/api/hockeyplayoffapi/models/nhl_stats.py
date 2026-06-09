@@ -70,3 +70,25 @@ class nhl_goaltending_wins_leaders(SQLModel, table=False):
     team_name: str
     team_abbrv: str
     team_logo: str
+
+class nhl_playoff_game_schedules(SQLModel, table=False):
+       game_id:int
+       game_date:str
+       home_team:str
+       home_team_image:str
+       away_team:str
+       away_team_image:str
+       home_score:int
+       away_score:int
+       first_period_home_score:int
+       second_period_home_score:int
+       third_period_home_score:int
+       overtime_home_score:int
+       final_home_score:int
+       first_period_away_score:int
+       second_period_away_score:int
+       third_period_away_score:int
+       overtime_away_score:int
+       final_away_score:int
+       round:str=""
+       game_number:int=0
