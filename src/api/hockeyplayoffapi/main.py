@@ -9,8 +9,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
+
+
 from .models.nhl_teams import nhl_teams, teams,nhl_playoff_dates
-from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_goaltending_wins_leaders, nhl_plusminus_leaders, nhl_points_leaders
+from .models.nhl_stats import nhl_goal_leaders,nhl_playoff_game_schedules, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_goaltending_wins_leaders, nhl_plusminus_leaders, nhl_points_leaders
 print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get('DOCKER_ENV'):
    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
@@ -393,6 +395,28 @@ def get_nhl_goaltending_wins_leaders(session: SessionDep, TeamName:int=0)-> list
                 wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
           return wins
 
+def get_nhl_playoff_schedule_games(session: SessionDep, TeamName:int=0)-> list[nhl_playoff_game_schedules]:
+
+
+                query = text("""
+                        select distinct a.game_date as gameDate, a.start_time as gameStartTime,
+                        away.name as awayTeamName, a.awayTeamScore as awayScore, away.abbrv as awayTeamNameAbbrv, away.logo_url as awayTeamLogoUrl,
+                        home.name as homeTeamName, a.homeTeamScore as homeScore, home.abbrv as homeTeamNameAbbrv, home.logo_url as homeTeamLogoUrl,
+                        a.seriesTitle as seriesTitle, a.round as playoffRound, a.stationinfo as tvStation,  a.venueName as homeTeamVenueName,
+                        a.winningGoaliePlayerID, goalie.first_name as goalieFirstName, goalie.last_name as goalieLastName,  goalie.headshot_url as goalieHeadShotUrl,
+                        a.winningGoalScorerPlayerID, skater.first_name as skaterFirstName, skater.last_name as skaterLastName, skater.headshot_url as skaterHeadShotUrl,
+                        a.series_info as  seriesInfo
+                        from nhl_playoff_schedule_games a inner join teams home on home.id = a.homeTeamId
+                                                                                                inner join teams away on away.id = a.awayTeamID
+                                                                                                inner join players goalie on goalie.id = a.winningGoaliePlayerID
+                                                                                                inner join players skater on skater.id = a.winningGoalScorerPlayerID
+                        order by a.game_date desc ;
+                        """)
+                results = session.execute(query)
+                rows = results.mappings().all()
+                schedule:list[nhl_playoff_game_schedules] = [nhl_playoff_game_schedules(**row) for row in rows]
+                return schedule
+
 
 
 
@@ -406,3 +430,17 @@ def read_item(item_id: int, q:str | None = None):
 @app.get("/appname")
 async def get_app_name():
     return {"app_name": "Hockey Playoff API"}
+
+
+# select distinct a.game_date as gameDate, a.start_time as gameStartTime,
+# away.name as awayTeamName, a.awayTeamScore as awayScore, away.abbrv as awayTeamNameAbbrv, away.logo_url as awayTeamLogoUrl,
+# home.name as homeTeamName, a.homeTeamScore as homeScore, home.abbrv as homeTeamNameAbbrv, home.logo_url as homeTeamLogoUrl,
+# a.seriesTitle as seriesTitle, a.round as playoffRound, a.stationinfo as tvStation,  a.venueName as homeTeamVenueName,
+# a.winningGoaliePlayerID, goalie.first_name as goalieFirstName, goalie.last_name as goalieLastName,  goalie.headshot_url as goalieHeadShotUrl,
+# a.winningGoalScorerPlayerID, skater.first_name as skaterFirstName, skater.last_name as skaterLastName, skater.headshot_url as skaterHeadShotUrl,
+# a.series_info as  seriesInfo
+# from nhl_playoff_schedule_games a inner join teams home on home.id = a.homeTeamId
+# 																        inner join teams away on away.id = a.awayTeamID
+# 																		inner join players goalie on goalie.id = a.winningGoaliePlayerID
+# 																		inner join players skater on skater.id = a.winningGoalScorerPlayerID
+# order by a.game_date desc

@@ -1,3 +1,5 @@
+from turtle import home
+
 from dns.edns import option_from_wire_parser
 from dataclasses import dataclass
 
@@ -132,26 +134,29 @@ class nhl_game_score:
 
 @dataclass
 class nhl_playoff_schedule:
-      gameID:int=0
-      seasonID:int=0
-      game_date:str=""
-      start_time:str=""
-      homeTeamID:int=0
-      homeTeamScore:int=0
-      awayTeamID:int=0
-      awayTeamScore:int=0
-      topSeedsWin:str=""
-      topSeedsTeamID:int=0
-      bottomSeedsWin:str=""
-      bottomSeedsTeamID:int=0
+      gameDate:str=""
+      gameStartTime:str=""
+      awayTeamName:str=""
+      awayScore:str=""
+      awayTeamNameAbbrv:str=""
+      awayTeamLogoUrl:str=""
+      homeTeamName:str=""
+      homeScore:str=""
+      homeTeamNameAbbrv:str=""
+      homeTeamLogoUrl:str=""
       seriesTitle:str=""
-      round:str=""
-      stationInfo:str=""
-      gameNumberOfSeries:str=""
-      winningGoaliePlayerID:int=0
-      winningGoalScorerPlayerID:int=0
-      venueName:str=""
-      periods:int=0
+      playoffRound:str=""
+      tvStation:str=""
+      homeTeamVenueName:str=""
+      winningGoaliePlayerID:str=""
+      goalieFirstName:str=""
+      goalieLastName:str=""
+      goalieHeadShotUrl:str=""
+      winningGoalScorerPlayerID:str=""
+      skaterFirstName:str=""
+      skaterLastName:str=""
+      skaterHeadShotUrl:str=""
+      seriesInfo:str=""
 class DynamicObject:
       def __init__(self, **kwargs):
           for key, value in kwargs.items():

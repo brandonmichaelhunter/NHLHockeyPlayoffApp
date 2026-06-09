@@ -276,6 +276,7 @@ class nhl_etl_manager:
                         winningGoalScorerPlayerID INTEGER NULL,
                         venueName TEXT NULL,
                         periods INTEGER NULL,
+                        series_info TEXT NULL,
                         DateCreated DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         '''
@@ -297,14 +298,14 @@ class nhl_etl_manager:
 
     def run_data_extraction_process(self):
         try:
-            self.run_seasons_pipeline()
-            self.run_teams_pipeline()
-            self.run_team_roster_pipeline()
-            self.run_games_pipeline()
-            self.run_game_player_stats_pipeline()
-            self.run_game_box_score_pipeline()
-            self.run_goaltending_win_leaders_pipeline()
-            self.run_nhl_scores_pipeline()
+            # self.run_seasons_pipeline()
+            # self.run_teams_pipeline()
+            # self.run_team_roster_pipeline()
+            # self.run_games_pipeline()
+            # self.run_game_player_stats_pipeline()
+            # self.run_game_box_score_pipeline()
+            # self.run_goaltending_win_leaders_pipeline()
+            # self.run_nhl_scores_pipeline()
             self.run_nhl_playoff_game_schedules_pipeline()
         except Exception as e:
             # pyrefly: ignore [missing-attribute]
@@ -1282,10 +1283,37 @@ class nhl_etl_manager:
                                winningGoalScorerPlayerID:int=games['winningGoalScorer']['playerId']
                            venueName = games['venue']['default']
                            periods = games['periodDescriptor']['number']
+                           # determine series info
+                           series_info = ""
+                           if int(topSeedsWin) == 0 and int(bottomSeedsWin) == 0:
+                              series_info = "Series has not started"
+                           elif int(topSeedsWin) > int(bottomSeedsWin) and int(topSeedsWin) < 4:
+                                if homeTeamID == topSeedsTeamID:
+                                   series_info = f"{homeTeamAbbrv} leads series {topSeedsWin}-{bottomSeedsWin}"
+                                elif awayTeamID == topSeedsTeamID:
+                                     series_info = f"{awayTeamAbbrv} leads series {topSeedsWin}-{bottomSeedsWin}"
+                           elif int(topSeedsWin) > int(bottomSeedsWin) and int(topSeedsWin) >= 4:
+                                if homeTeamID == topSeedsTeamID:
+                                   series_info = f"{homeTeamAbbrv} wins series {topSeedsWin}-{bottomSeedsWin}"
+                                elif awayTeamID == topSeedsTeamID:
+                                   series_info = f"{awayTeamAbbrv} wins series {topSeedsWin}-{bottomSeedsWin}"
+                           elif int(bottomSeedsWin) > int(topSeedsWin) and int(bottomSeedsWin) >= 4:
+                                if homeTeamID == bottomSeedsTeamID:
+                                   series_info = f"{homeTeamAbbrv} wins series {bottomSeedsWin}-{topSeedsWin}"
+                                elif awayTeamID == bottomSeedsTeamID:
+                                   series_info = f"{awayTeamAbbrv} wins series {bottomSeedsWin}-{topSeedsWin}"
+                           elif int(bottomSeedsWin) > int(topSeedsWin) and int(bottomSeedsWin) < 4:
+                                if homeTeamID == bottomSeedsTeamID:
+                                   series_info = f"{homeTeamAbbrv} leads series {bottomSeedsWin}-{topSeedsWin}"
+                                elif awayTeamID == bottomSeedsTeamID:
+                                   series_info = f"{awayTeamAbbrv} leads series {bottomSeedsWin}-{topSeedsWin}"
+                           elif int(topSeedsWin) == int(bottomSeedsWin):
+                                series_info = f"Series is tied {topSeedsWin}-{bottomSeedsWin}"
+
 
                            playeroff_game_schedule_item = nhl_playoff_schedule(gameID,seasonID,gameDate,start_time,homeTeamID,homeTeamScore,awayTeamID,
                                 awayTeamScore,topSeedsWin,topSeedsTeamID,bottomSeedsWin,bottomSeedsTeamID,seriesTitle,round,
-                                stationInfo,gameNumberOfSeries,winningGoaliePlayerID,winningGoalScorerPlayerID,venueName,periods)
+                                stationInfo,gameNumberOfSeries,winningGoaliePlayerID,winningGoalScorerPlayerID,venueName,periods,series_info)
                            transformed_data.append(playeroff_game_schedule_item)
 
             return transformed_data
@@ -1299,9 +1327,9 @@ class nhl_etl_manager:
             for nhlGameScheduleModel in transformedData:
                 print(nhlGameScheduleModel)
                 query = '''
-                    insert into nhl_playoff_schedule_games(gameID,seasonID,game_date,start_time,homeTeamID,homeTeamScore,awayTeamID,awayTeamScore,topSeedsWin,topSeedsTeamID,bottomSeedsWin,bottomSeedsTeamID,seriesTitle,round,stationInfo,gameNumberOfSeries,winningGoaliePlayerID,winningGoalScorerPlayerID,venueName,periods)
-                    VALUES ('{gameID}','{seasonID}','{game_date}','{start_time}','{homeTeamID}','{homeTeamScore}','{awayTeamID}','{awayTeamScore}','{topSeedsWin}','{topSeedsTeamID}','{bottomSeedsWin}','{bottomSeedsTeamID}','{seriesTitle}','{round}','{stationInfo}','{gameNumberOfSeries}','{winningGoaliePlayerID}','{winningGoalScorerPlayerID}','{venueName}','{periods}');
-                '''.format(gameID=nhlGameScheduleModel.gameID, seasonID=nhlGameScheduleModel.seasonID, game_date=nhlGameScheduleModel.game_date, start_time=nhlGameScheduleModel.start_time, homeTeamID=nhlGameScheduleModel.homeTeamID, homeTeamScore=nhlGameScheduleModel.homeTeamScore, awayTeamID=nhlGameScheduleModel.awayTeamID, awayTeamScore=nhlGameScheduleModel.awayTeamScore, topSeedsWin=nhlGameScheduleModel.topSeedsWin, topSeedsTeamID=nhlGameScheduleModel.topSeedsTeamID, bottomSeedsWin=nhlGameScheduleModel.bottomSeedsWin, bottomSeedsTeamID=nhlGameScheduleModel.bottomSeedsTeamID, seriesTitle=nhlGameScheduleModel.seriesTitle, round=nhlGameScheduleModel.round, stationInfo=nhlGameScheduleModel.stationInfo, gameNumberOfSeries=nhlGameScheduleModel.gameNumberOfSeries, winningGoaliePlayerID=nhlGameScheduleModel.winningGoaliePlayerID, winningGoalScorerPlayerID=nhlGameScheduleModel.winningGoalScorerPlayerID, venueName=nhlGameScheduleModel.venueName, periods=nhlGameScheduleModel.periods)
+                    insert into nhl_playoff_schedule_games(gameID,seasonID,game_date,start_time,homeTeamID,homeTeamScore,awayTeamID,awayTeamScore,topSeedsWin,topSeedsTeamID,bottomSeedsWin,bottomSeedsTeamID,seriesTitle,round,stationInfo,gameNumberOfSeries,winningGoaliePlayerID,winningGoalScorerPlayerID,venueName,periods,series_info)
+                    VALUES ('{gameID}','{seasonID}','{game_date}','{start_time}','{homeTeamID}','{homeTeamScore}','{awayTeamID}','{awayTeamScore}','{topSeedsWin}','{topSeedsTeamID}','{bottomSeedsWin}','{bottomSeedsTeamID}','{seriesTitle}','{round}','{stationInfo}','{gameNumberOfSeries}','{winningGoaliePlayerID}','{winningGoalScorerPlayerID}','{venueName}','{periods}','{series_info}');
+                '''.format(gameID=nhlGameScheduleModel.gameID, seasonID=nhlGameScheduleModel.seasonID, game_date=nhlGameScheduleModel.game_date, start_time=nhlGameScheduleModel.start_time, homeTeamID=nhlGameScheduleModel.homeTeamID, homeTeamScore=nhlGameScheduleModel.homeTeamScore, awayTeamID=nhlGameScheduleModel.awayTeamID, awayTeamScore=nhlGameScheduleModel.awayTeamScore, topSeedsWin=nhlGameScheduleModel.topSeedsWin, topSeedsTeamID=nhlGameScheduleModel.topSeedsTeamID, bottomSeedsWin=nhlGameScheduleModel.bottomSeedsWin, bottomSeedsTeamID=nhlGameScheduleModel.bottomSeedsTeamID, seriesTitle=nhlGameScheduleModel.seriesTitle, round=nhlGameScheduleModel.round, stationInfo=nhlGameScheduleModel.stationInfo, gameNumberOfSeries=nhlGameScheduleModel.gameNumberOfSeries, winningGoaliePlayerID=nhlGameScheduleModel.winningGoaliePlayerID, winningGoalScorerPlayerID=nhlGameScheduleModel.winningGoalScorerPlayerID, venueName=nhlGameScheduleModel.venueName, periods=nhlGameScheduleModel.periods, series_info=nhlGameScheduleModel.series_info.replace("'", "''"))
                 result = self._dbManager.execute_query(query)
                 if not result:
                     self._log.error(f"Failed to insert NHL playoff schedule data for game: {nhlGameScheduleModel.game_date}")
