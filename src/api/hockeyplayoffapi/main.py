@@ -10,9 +10,11 @@ from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
 
+from .models.nhl_schedules import nhl_playoff_schedule
+
 
 from .models.nhl_teams import nhl_teams, teams,nhl_playoff_dates
-from .models.nhl_stats import nhl_goal_leaders,nhl_playoff_game_schedules, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_goaltending_wins_leaders, nhl_plusminus_leaders, nhl_points_leaders
+from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_goaltending_wins_leaders, nhl_plusminus_leaders, nhl_points_leaders
 print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get('DOCKER_ENV'):
    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
@@ -90,6 +92,15 @@ async def index(request:Request):
 @app.get("/stats", response_class=HTMLResponse)
 async def nhl_stats(session: SessionDep, request:Request):
           return templates.TemplateResponse(request=request, name="stats.html", context={})
+
+@app.get("/schedule", response_class=HTMLResponse)
+async def nhl_schedule(session: SessionDep, request:Request):
+          return templates.TemplateResponse(request=request, name="schedule.html", context={})
+
+@app.get("/get_nhl_schedule", response_class=HTMLResponse)
+async def get_nhl_schedule(session: SessionDep, request:Request):
+          nhlPlayoffSchedules:list[nhl_playoff_schedule] = get_nhl_playoff_schedule_games(session=session)
+          return templates.TemplateResponse(request=request, name="nhl_schedule.html", context={"schedules": nhlPlayoffSchedules})
 
 @app.get("/get_nhl_teams", response_class=HTMLResponse)
 async def get_nhl_teams(session: SessionDep, request:Request):
@@ -395,7 +406,7 @@ def get_nhl_goaltending_wins_leaders(session: SessionDep, TeamName:int=0)-> list
                 wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
           return wins
 
-def get_nhl_playoff_schedule_games(session: SessionDep, TeamName:int=0)-> list[nhl_playoff_game_schedules]:
+def get_nhl_playoff_schedule_games(session: SessionDep)-> list[nhl_playoff_schedule]:
 
 
                 query = text("""
@@ -414,7 +425,7 @@ def get_nhl_playoff_schedule_games(session: SessionDep, TeamName:int=0)-> list[n
                         """)
                 results = session.execute(query)
                 rows = results.mappings().all()
-                schedule:list[nhl_playoff_game_schedules] = [nhl_playoff_game_schedules(**row) for row in rows]
+                schedule:list[nhl_playoff_schedule] = [nhl_playoff_schedule(**row) for row in rows]
                 return schedule
 
 

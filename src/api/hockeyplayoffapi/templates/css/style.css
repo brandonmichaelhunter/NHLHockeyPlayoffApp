@@ -14,3 +14,10 @@
 
     border-top-color:lightgray !important;border-top-width: 1px !important;border-top-style: solid !important;
 }
+.matchup_text {
+    text-align: left !important;
+}
+.seriesInfoText {
+    font-size:15px !important;
+    color:gray !important;
+}

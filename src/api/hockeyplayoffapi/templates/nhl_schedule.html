@@ -1,0 +1,62 @@
+<!-- templates/nhl_schedule.html -->
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+        {% for schedule in schedules %}
+        <div class="row">
+            <div class="col-md-12" style="text-align: left;"><h2>{{ schedule.gameDate }}</h2></div>
+            <div class="col-md-12">
+                <table class="table ">
+
+
+
+                <thead class="table_header" style="border-top-color:inherit !important;border-top-width: 1px !important;border-top-style: solid !important;">
+                <tr>
+                    <th style="text-align: left;">MatchUp</th>
+                    <th>Results</th>
+                    <th>Series Title</th>
+                    <th>Round</th>
+                    <th>TV Station</th>
+                    <th>Venue</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="row matchup_text"  style="text-align: left;">
+                            <div class="col-md-12 ">
+                                <table>
+                        <tr><td>{{ schedule.awayTeamName }}</td><td> @ {{ schedule.homeTeamName }}</td></tr>
+                     </table>
+                            </div>
+                            <div class="col-md-12 seriesInfoText" style="text-align: left; font-size:15px; color:gray;">
+                                {{ schedule.seriesInfo}}
+                            </div>
+                        </div>
+
+                    </td>
+                    <td>
+
+                     <table>
+                        <tr>
+                            <td>{{ schedule.awayTeamNameAbbrv}}&nbsp;{{ schedule.awayScore }}</td>
+                            <td>&nbsp;,{{ schedule.homeTeamNameAbbrv}}&nbsp;{{ schedule.homeScore }}</td></tr>
+                     </table>
+                    </td>
+                    <td>{{ schedule.seriesTitle }}</td>
+                    <td>{{ schedule.playoffRound }}</td>
+                    <td>{{ schedule.tvStation }}</td>
+                    <td>{{ schedule.homeTeamVenueName }}</td>
+                </tr>
+                 </tbody>
+        </table>
+            </div>
+        </div>
+
+
+                {% endfor %}
+
+    </div>
+  </div>
+
+</div>
