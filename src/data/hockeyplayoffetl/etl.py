@@ -1,23 +1,36 @@
-import sqlite3
-import requests
-from datetime import datetime, timedelta,date
-
-from sqlmodel import true
-from src.data.hockeyplayoffetl.models.nhl_goaltending_win_leader import nhl_goaltending_win_leader
-from src.data.hockeyplayoffetl.models.nhl_score import nhl_score
-from .models.nhl_team import nhl_score
-from .models.nhl_skate_leaders import nhl_skate_leader
-from .models.data_request import data_request
-from .models.nhl_goaltending_gaa_leader import nhl_goaltending_gaa_leader
-from .models.nhl_goaltending_save_pct_leader import nhl_goaltending_save_pct_leader
-from .models.nhl_skate_goal_leader import nhl_skate_goal_leader
-import argparse
-from .services.nhl_etl_manager import nhl_etl_manager
-from .services.nhl_api_client import nhl_api_client
-from .services.nhl_db_manager import nhl_db_manager
+import sys
 import os
 from pathlib import Path
+#import requests
+from datetime import datetime, timedelta,date
+
+# Adds the parent directory to the Python search path
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import sqlite3
+from sqlmodel import true
+# from .models.nhl_goaltending_win_leader import nhl_goaltending_win_leader
+# from .models.nhl_score import nhl_score
+# from .models.nhl_team import nhl_score
+# from .models.nhl_skate_leaders import nhl_skate_leader
+# from .models.data_request import data_request
+# from .models.nhl_goaltending_gaa_leader import nhl_goaltending_gaa_leader
+# from .models.nhl_goaltending_save_pct_leader import nhl_goaltending_save_pct_leader
+# from .models.nhl_skate_goal_leader import nhl_skate_goal_leader
+#import argparse
+
+from .services.nhl_api_client import nhl_api_client
+from .services.nhl_etl_manager import nhl_etl_manager
+from .services.nhl_db_manager import nhl_db_manager
+from .models.nhl_models import *
+import traceback
+try:
+    import tkinter as tk
+    print("Tkinter OK")
+except ImportError:
+       traceback.print_exc()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class NHLDataManager:
       dbConn = None
       dbCursor = None
@@ -324,13 +337,13 @@ class NHLDataManager:
       def get_nhl_scores(self,GameDate:str):
             try:
                 url = "https://api-web.nhle.com/v1/score/"+GameDate+""
-                response = requests.get(url)
-                if response.status_code == 200:
-                    data = response.json()
-                    return data
-                else:
-                    self.debugPrint(f"Error fetching NHL scores: {response.status_code}")
-                    return None
+                # #response = requests.get(url)
+                # if response.status_code == 200:
+                #     data = response.json()
+                #     return data
+                # else:
+                #     self.debugPrint(f"Error fetching NHL scores: {response.status_code}")
+                #     return None
             except Exception as e:
                    self.debugPrint(f"Exception occurred while fetching NHL scores: {e}")
                    return None
@@ -521,13 +534,13 @@ class NHLDataManager:
       def get_nhl_skater_leaders(self):
           try:
               url = "https://api-web.nhle.com/v1/skater-stats-leaders/20252026/3?categories=goals&limit=5"
-              response = requests.get(url)
-              if response.status_code == 200:
-                  data = response.json()
-                  return data
-              else:
-                  self.debugPrint(f"Error fetching NHL skater leaders: {response.status_code}")
-                  return None
+            #   response = requests.get(url)
+            #   if response.status_code == 200:
+            #       data = response.json()
+            #       return data
+            #   else:
+            #       self.debugPrint(f"Error fetching NHL skater leaders: {response.status_code}")
+            #       return None
           except Exception as e:
               self.debugPrint(f"Exception occurred while fetching NHL skater leaders: {e}")
               return None
@@ -626,14 +639,14 @@ class NHLDataManager:
           try:
               self.debugPrint("Fetching data from API")
               url = "https://api-web.nhle.com/v1/goalie-stats-leaders/20252026/3?categories=goalsAgainstAverage&limit=5"
-              response = requests.get(url)
-              if response.status_code == 200:
-                  data = response.json()
-                  self.debugPrint("Data fetched from API successfully")
-                  return data
-              else:
-                  self.debugPrint(f"Error fetching NHL goaltending GAA leaders: {response.status_code}")
-                  return None
+            #   response = requests.get(url)
+            #   if response.status_code == 200:
+            #       data = response.json()
+            #       self.debugPrint("Data fetched from API successfully")
+            #       return data
+            #   else:
+            #       self.debugPrint(f"Error fetching NHL goaltending GAA leaders: {response.status_code}")
+            #       return None
           except Exception as e:
               self.debugPrint(f"Exception occurred while fetching NHL goaltending GAA leaders: {e}")
               return None
@@ -759,14 +772,14 @@ class NHLDataManager:
           try:
               self.debugPrint("Fetching data from API")
               url = "https://api-web.nhle.com/v1/goalie-stats-leaders/20252026/3?categories=wins&limit=5"
-              response = requests.get(url)
-              if response.status_code == 200:
-                  data = response.json()
-                  self.debugPrint("Data fetched from API successfully")
-                  return data
-              else:
-                  self.debugPrint(f"Error fetching NHL goaltending wins leaders: {response.status_code}")
-                  return None
+            #   response = requests.get(url)
+            #   if response.status_code == 200:
+            #       data = response.json()
+            #       self.debugPrint("Data fetched from API successfully")
+            #       return data
+            #   else:
+            #       self.debugPrint(f"Error fetching NHL goaltending wins leaders: {response.status_code}")
+            #       return None
           except Exception as e:
               self.debugPrint(f"Exception occurred while fetching NHL goaltending wins leaders: {e}")
               return None
@@ -892,14 +905,14 @@ class NHLDataManager:
           try:
               self.debugPrint("Fetching data from API")
               url = "https://api-web.nhle.com/v1/goalie-stats-leaders/20252026/3?categories=savePctg&limit=5"
-              response = requests.get(url)
-              if response.status_code == 200:
-                  data = response.json()
-                  self.debugPrint("Data fetched from API successfully")
-                  return data
-              else:
-                  self.debugPrint(f"Error fetching NHL goaltending save percentage leaders: {response.status_code}")
-                  return None
+            #   # response = requests.get(url)
+            #   if response.status_code == 200:
+            #       data = response.json()
+            #       self.debugPrint("Data fetched from API successfully")
+            #       return data
+            #   else:
+            #       self.debugPrint(f"Error fetching NHL goaltending save percentage leaders: {response.status_code}")
+            #       return None
           except Exception as e:
               self.debugPrint(f"Exception occurred while fetching NHL goaltending save percentage leaders: {e}")
               return None
@@ -1025,14 +1038,14 @@ class NHLDataManager:
           try:
               self.debugPrint("Fetching data from API")
               url = "https://api-web.nhle.com/v1/skater-stats-leaders/20252026/3?categories=goals&limit=5"
-              response = requests.get(url)
-              if response.status_code == 200:
-                  data = response.json()
-                  self.debugPrint("Data fetched from API successfully")
-                  return data
-              else:
-                  self.debugPrint(f"Error fetching NHL skate goal leaders: {response.status_code}")
-                  return None
+            #   response = requests.get(url)
+            #   if response.status_code == 200:
+            #       data = response.json()
+            #       self.debugPrint("Data fetched from API successfully")
+            #       return data
+            #   else:
+            #       self.debugPrint(f"Error fetching NHL skate goal leaders: {response.status_code}")
+            #       return None
           except Exception as e:
               self.debugPrint(f"Exception occurred while fetching NHL skate goal leaders: {e}")
               return None

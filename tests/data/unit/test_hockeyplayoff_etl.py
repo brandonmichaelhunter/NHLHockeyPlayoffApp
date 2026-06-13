@@ -1,8 +1,8 @@
 import pytest
 import sqlite3
 from unittest.mock import MagicMock, patch
-from src.data.hockeyplayoffetl.hockeyplayoff_etl import NHLDataManager
-
+# pyrefly: ignore [missing-import]
+from src.data.hockeyplayoffetl.etl import NHLDataManager
 # define test database initalization method.
 @pytest.mark.unit
 def test_init_test_db():
