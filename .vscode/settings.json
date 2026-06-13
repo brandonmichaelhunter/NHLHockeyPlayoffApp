@@ -26,5 +26,6 @@
             "files.trimTrailingWhitespace": true,
             "files.trimFinalNewlines": true
         }
-    ]
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }

@@ -35,25 +35,7 @@ SessionDep = Annotated[Session, Depends(get_session)]
 app = FastAPI()
 
 templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
-#--------------------------------------------------------------------------------------
-# select distinct playerID as player_id,
-# Sum(goals) as total_goals,
-# RANK() OVER (ORDER BY SUM(goals) desc) as league_ranking,
-# b.first_name +' '+ b.last_name as player_fullname,
-# b.headshot_url as player_headshot,
-# a.position as player_position,
-# d.name as team_name,
-# d.abbrv as team_abbrv,
-# d.logo_url as team_logo,
-# from player_game_stats a inner join players b on b.id = a.playerID
-# 												     inner join team_roster c on c.player_id = b.id
-# 													 inner join teams d on d.id = c.team_id
-#where a.position in ('L','R','C','D') and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
-#              gameID in (select id from games where year = 2026 and month in (5)) )
-#group by playerID, goals
-#order by total_goals  desc
-#limit 5
-#--------------------------------------------------------------------------------------
+
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)

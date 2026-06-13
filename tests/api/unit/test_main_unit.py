@@ -84,6 +84,7 @@ async def test_root():
     assert response.status_code == 200
     assert response.json() == {"app_name": "Hockey Playoff API"}
 
+@pytest.mark.unit
 @pytest.mark.anyio
 async def test_health_live():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
@@ -92,6 +93,7 @@ async def test_health_live():
     assert response.status_code == 200
     assert response.json() == {"status": "alive"}
 
+@pytest.mark.unit
 @pytest.mark.anyio
 async def test_health_ready_db_connection():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
@@ -99,3 +101,17 @@ async def test_health_ready_db_connection():
 
     assert response.status_code == 200
     assert response.text == '"Database connection successful"'
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_read_nhl_scores_with_valid_date(httpx_mock):
+          # Mock the database response for a valid date
+          mockNHLScores = {"date": "2024-05-01", "home_team":  "A", "away_team": "B"}
+          httpx_mock.add_response(url="http://localhost/nhl_scores?nhlScoreDateSelect=2024-05-01", json=mockNHLScores, status_code=200)
+          mockBaseUrl = "http://localhost/nhl_scores?nhlScoreDateSelect=2024-05-01"
+          async with AsyncClient(transport=ASGITransport(app=app), base_url=mockBaseUrl) as ac:
+                     response = await ac.get("/nhl_scores", params={"nhlScoreDateSelect": "2024-05-01"}, headers={"hx-request": "false"})
+
+          # Assert the response
+          assert response.status_code == 200, "Expected a 200 OK response for a valid date"
+          assert response.json() == sorted(mockNHLScores.items()), "Expected the mocked NHL scores to be returned in the response"
