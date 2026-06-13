@@ -1,5 +1,8 @@
+import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
+from pytest_httpx import HTTPXMock, httpx_mock
+from pytest_httpx import HTTPXMock
 from src.api.hockeyplayoffapi.main import app
 from unittest.mock import MagicMock, patch
 from sqlmodel import Session
@@ -72,6 +75,123 @@ async def test_nhl_scores_returns_template_with_hx_header():
     finally:
         main_module.app.dependency_overrides.clear()
 
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_read_nhl_scores_with_valid_date(httpx_mock: HTTPXMock):
+          # Mock the database response for a valid date
+          mockNHLScores = [{"date": "2024-05-01", "home_team":  "A", "away_team": "B"}]
+
+          # mock database session
+          mockDBSession = MagicMock()
+
+          # mock the session.exec().all() call.
+          mockDBSession.exec.return_value.all.return_value = mockNHLScores
+
+          # Override the get_session dependency to return our mock session.
+          def override_get_session():
+              yield mockDBSession
+
+          # Overriding the Session dependency in the FastAPI app to use our mock session.
+          main_module.app.dependency_overrides[main_module.get_session] = override_get_session
+
+          try:
+                # Use ASGITransport to connect the client directly to the FastAPI app
+                async with AsyncClient(transport=ASGITransport(app=main_module.app), base_url="http://localhost") as ac:
+                    response = await ac.get("/nhl_scores", params={"nhlScoreDateSelect": "2024-05-01"}, headers={"hx-request": "false"})
+
+                # Assert the response
+                assert response.status_code == 200, "Expected a 200 OK response for a valid date"
+                assert response.json() == mockNHLScores, "Expected the mocked NHL scores to be returned in the response"
+          finally:
+                 main_module.app.dependency_overrides.clear()
+
+@pytest.mark.unit
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "invalid_date, expected_payload",
+    [
+        ("2024-05-0", [])
+    ],
+)
+async def test_read_nhl_scores_with_invalid_date(invalid_date, expected_payload):
+          # Mock the database response for a valid date
+          mockNHLScores = [{"date": "2024-05-01", "home_team":  "A", "away_team": "B"}]
+
+          # mock database session
+          mockDBSession = MagicMock()
+
+          def exec_side_effect(stmt):
+              params = stmt.compile().params
+              selected_date = (
+                    params.get("date_1") or
+                    params.get("nhlScoreDateSelect_1") or
+                    params.get("param_1"))
+
+              result = MagicMock()
+              result.all.return_value = mockNHLScores if selected_date == "2024-05-01" else []
+              return result
+
+
+          mockDBSession.exec.side_effect = exec_side_effect
+
+          # Override the get_session dependency to return our mock session.
+          def override_get_session():
+              yield mockDBSession
+
+          # Overriding the Session dependency in the FastAPI app to use our mock session.
+          main_module.app.dependency_overrides[main_module.get_session] = override_get_session
+
+          try:
+                # Use ASGITransport to connect the client directly to the FastAPI app
+                async with AsyncClient(transport=ASGITransport(app=main_module.app), base_url="http://localhost") as ac:
+                    response = await ac.get("/nhl_scores", params={"nhlScoreDateSelect": invalid_date}, headers={"hx-request": "false"})
+
+                # Assert the response
+                assert response.status_code == 200, "Expected a 200 OK response for a valid date"
+                assert response.json() == expected_payload, "Expected the mocked NHL scores not to be returned in the response"
+          finally:
+                 main_module.app.dependency_overrides.clear()
+
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_nhl_stats_returns_stats_html_template():
+
+    # Mock the nhl_scores fake data.
+    fake_scores = [{"date": "2024-05-01", "home_team": "A", "away_team": "B"}]
+    # Mock the database session.
+    mock_session = MagicMock()
+    # Set up the mock to return the fake scores when exec(). all() is called.
+    mock_session.exec.return_value.all.return_value = fake_scores
+
+    # Override the get_session dependency to return our mock session.
+    def override_get_session():
+        yield mock_session
+
+    # Overriding the Session dependency in the FastAPI app to use our mock session.
+    main_module.app.dependency_overrides[main_module.get_session] = override_get_session
+
+    try:
+        #
+        with patch.object(
+            main_module.templates,
+            "TemplateResponse",
+            return_value=HTMLResponse(content="rendered template"),
+        ) as template_mock:
+            async with AsyncClient(transport=ASGITransport(app=main_module.app), base_url="http://localhost") as ac:
+                response = await ac.get(
+                    "/stats",
+                    params={},
+                    headers={},
+                )
+
+        assert response.status_code == 200
+        assert response.text == "rendered template"
+        template_mock.assert_called_once()
+        _, kwargs = template_mock.call_args
+        assert kwargs["name"] == "stats.html"
+    finally:
+        main_module.app.dependency_overrides.clear()
 
 
 @pytest.mark.unit
@@ -101,17 +221,3 @@ async def test_health_ready_db_connection():
 
     assert response.status_code == 200
     assert response.text == '"Database connection successful"'
-
-@pytest.mark.unit
-@pytest.mark.anyio
-async def test_read_nhl_scores_with_valid_date(httpx_mock):
-          # Mock the database response for a valid date
-          mockNHLScores = {"date": "2024-05-01", "home_team":  "A", "away_team": "B"}
-          httpx_mock.add_response(url="http://localhost/nhl_scores?nhlScoreDateSelect=2024-05-01", json=mockNHLScores, status_code=200)
-          mockBaseUrl = "http://localhost/nhl_scores?nhlScoreDateSelect=2024-05-01"
-          async with AsyncClient(transport=ASGITransport(app=app), base_url=mockBaseUrl) as ac:
-                     response = await ac.get("/nhl_scores", params={"nhlScoreDateSelect": "2024-05-01"}, headers={"hx-request": "false"})
-
-          # Assert the response
-          assert response.status_code == 200, "Expected a 200 OK response for a valid date"
-          assert response.json() == sorted(mockNHLScores.items()), "Expected the mocked NHL scores to be returned in the response"

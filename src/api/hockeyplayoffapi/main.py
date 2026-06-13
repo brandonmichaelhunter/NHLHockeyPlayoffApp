@@ -57,6 +57,7 @@ async def healthready():
       if not db_ok:
             raise HTTPException(status_code=503, detail="Database connection failed")
       return "Database connection successful"
+
 @app.get("/nhl_scores", response_class=HTMLResponse)
 async def read_nhl_scores(session: SessionDep, request: Request,  hx_request: Annotated[Union[str, None], Header()] = None, nhlScoreDateSelect:str=None):
     sqlStmt = select(nhl_scores).where(nhl_scores.date == nhlScoreDateSelect)
