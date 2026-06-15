@@ -221,3 +221,43 @@ async def test_health_ready_db_connection():
 
     assert response.status_code == 200
     assert response.text == '"Database connection successful"'
+
+@pytest.mark.unit
+@pytest.mark.anyio
+async def test_nhl_schedule_returns_schedule_html_template():
+
+    # Mock the database session.
+    mock_session = MagicMock()
+
+
+    # Override the get_session dependency to return our mock session.
+    def override_get_session():
+        yield mock_session
+
+    # Overriding the Session dependency in the FastAPI app to use our mock session.
+    main_module.app.dependency_overrides[main_module.get_session] = override_get_session
+
+    try:
+        # Mock the templates.TemplateResponse object that returns a
+        # HTMLResponse object with the content property  set to 'rendered template'.
+        with patch.object(
+            main_module.templates, # Represents the Jinja2Templates instance
+            "TemplateResponse", # Represents an attribute on the object to swap out with a MagicMock
+            return_value=HTMLResponse(content="rendered template"), # Represents what the mock returns whenenver templates.TemplateResponse is called.
+        ) as template_mock:
+            async with AsyncClient(transport=ASGITransport(app=main_module.app), base_url="http://localhost") as ac:
+                response = await ac.get(
+                    "/schedule",
+                    params={},
+                    headers={},
+                )
+
+        assert response.status_code == 200
+        assert response.text == "rendered template"
+        template_mock.assert_called_once()
+        # verifies that the correct data is returned from the TemplateResponse call.
+        _, kwargs = template_mock.call_args
+        assert kwargs["name"] == "schedule.html"
+        assert kwargs["context"] == {}
+    finally:
+        main_module.app.dependency_overrides.clear()
