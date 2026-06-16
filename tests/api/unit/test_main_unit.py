@@ -11,6 +11,7 @@ from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 from src.api.hockeyplayoffapi import main as main_module
 from fastapi.responses import HTMLResponse
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_json_without_hx_header():
@@ -34,6 +35,7 @@ async def test_nhl_scores_returns_json_without_hx_header():
     finally:
         main_module.app.dependency_overrides.clear()
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_template_with_hx_header():
@@ -75,6 +77,7 @@ async def test_nhl_scores_returns_template_with_hx_header():
     finally:
         main_module.app.dependency_overrides.clear()
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_read_nhl_scores_with_valid_date(httpx_mock: HTTPXMock):
@@ -105,6 +108,7 @@ async def test_read_nhl_scores_with_valid_date(httpx_mock: HTTPXMock):
           finally:
                  main_module.app.dependency_overrides.clear()
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 @pytest.mark.parametrize(
@@ -154,7 +158,7 @@ async def test_read_nhl_scores_with_invalid_date(invalid_date, expected_payload)
 
 
 
-
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_root():
@@ -165,6 +169,7 @@ async def test_root():
     assert response.status_code == 200
     assert response.json() == {"app_name": "Hockey Playoff API"}
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_health_live():
@@ -174,6 +179,7 @@ async def test_health_live():
     assert response.status_code == 200
     assert response.json() == {"status": "alive"}
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_health_ready_db_connection():
@@ -184,6 +190,7 @@ async def test_health_ready_db_connection():
     assert response.text == '"Database connection successful"'
 # Confirm the correct html templates are return test methods.
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_games_returns_index_html_template():
@@ -216,6 +223,8 @@ async def test_nhl_games_returns_index_html_template():
         assert kwargs["name"] == "index.html"
     finally:
         main_module.app.dependency_overrides.clear()
+
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_stats_returns_stats_html_template():
@@ -255,6 +264,8 @@ async def test_nhl_stats_returns_stats_html_template():
         assert kwargs["name"] == "stats.html"
     finally:
         main_module.app.dependency_overrides.clear()
+
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_schedule_returns_schedule_html_template():
@@ -298,6 +309,7 @@ async def test_nhl_schedule_returns_schedule_html_template():
 # ------------------------------------------------
 # -- Confirm NHL Schedule endpoints return correct data.
 # ------------------------------------------------
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 @patch("src.api.hockeyplayoffapi.main.get_nhl_playoff_schedule_games")
@@ -347,6 +359,7 @@ async def test_get_nhl_schedule_returns_valid_nhl_schedule(mock_get_nhl_playoff_
     finally:
         main_module.app.dependency_overrides.clear()
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 @patch("src.api.hockeyplayoffapi.main.get_nhl_teams")
@@ -389,6 +402,7 @@ async def test_get_nhl_teams_returns_valid_nhl_teams(mock_function):
     finally:
         main_module.app.dependency_overrides.clear()
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 @patch("src.api.hockeyplayoffapi.main.get_nhl_goaltending_wins_leaders")
@@ -466,6 +480,7 @@ async def test_get_nhl_stats_returns_stats_leaders_template(
     finally:
         main_module.app.dependency_overrides.clear()
 
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_get_playoff_game_dates_returns_json():
@@ -618,7 +633,7 @@ def _schedule_row():
         "seriesInfo": "VGK leads series 2-1",
     }
 
-
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "func, kwargs, rows, expected_attr, expected_value, expected_params",
@@ -722,7 +737,7 @@ def test_main_helpers_success(
     else:
         assert call_args[1] == expected_params
 
-
+@pytest.mark.api
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "func, kwargs",
