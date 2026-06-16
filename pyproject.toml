@@ -98,7 +98,9 @@ pythonpath= [".",
              ]
 markers = [
      "unit: marks test as unit tests",
-     "integration: marks test as integration tests",
+    "integration: marks test as integration tests",
+    "api: marks test as API tests",
+    "etl: marks test as ETL tests",
 ]
 
 [tool.ruff]
@@ -111,8 +113,14 @@ test = "pytest"
 lint = "ruff check ."
 
 [tool.poe.tasks]
+api_tests = "pytest -m 'api' -v"
+api_unittests = "pytest -m 'api and unit' -v"
+api_integration = "pytest -m 'api and integration' -v"
+etl_tests = "pytest -m 'etl' -v"
+etl_unittests = "pytest -m 'etl and unit' -v"
+etl_integration = "pytest -m 'etl and integration' -v"
 unit_test = "pytest -m unit -v"
-integration_test = "pytest -m integration"
+integration_test = "pytest -m integration -v"
 lint = "ruff check ."
 format = "ruff check --fix && ruff format ."
 run_api = "uv run fastapi dev ./src/api/hockeyplayoffapi/main.py --reload"
