@@ -1,0 +1,50 @@
+name: Require Issue Labels
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  check-issues_labels:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    outputs:
+      status: ${{ steps.check-labels.outputs.status }}
+    steps:
+      - id: check-labels
+        uses: mshick/add-mask-token@v1 # Example of action structure
+        # Use an automated action like 'docker://agile-bot/require-label' 
+        # or write a custom bash script that checks github.event.issue.labels
+      - name: Require Labels
+        # You may pin to the exact commit or the version.
+        # uses: mheap/github-action-required-labels@0ac283b4e65c1fb28ce6079dea5546ceca98ccbe
+        uses: mheap/github-action-required-labels@v5
+        with:
+          # The GitHub token to use when calling the API
+          token:  ${{ github.token }}
+          # Comma or new line separated list of labels to match
+          labels: |
+                  hotfix
+                  bug
+                  documentation
+                  feature
+                  testing
+                  workflows
+                  data
+                  infrastructure
+                  refactor
+                  
+          # The mode of comparison to use. One of: exactly, minimum, maximum
+          mode: minimum
+          # The required number of labels to match
+          count: 1
+          # The message to log and to add to the PR (if add_comment is true). See the README for available placeholders
+          message: "You either did not provide a label or have not provided one of the valid labels (hotfix, bug, documentation, feature, testing, workflows, data, infrastructure, refactor). "
+          # Add a comment to the PR if required labels are missing
+          add_comment: true
+          # The exit type of the action. One of: failure, success
+          exit_type: failure
+          # Evaluate the values in `labels` as regular expressions
+          use_regex: false
+                
