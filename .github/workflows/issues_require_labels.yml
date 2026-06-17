@@ -3,9 +3,14 @@ name: Require Issue Labels
 on:
   issues:
     types: [opened, edited, closed, assigned,reopened,unlabeled]
-
+  issue_comment:
+    types:
+      - created
+      - deleted
+      - edited
 jobs:
   check-issues_labels:
+    if: ${{ github.event_name == 'issues' || !github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
