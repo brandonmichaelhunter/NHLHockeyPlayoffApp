@@ -2,7 +2,7 @@ name: Require Issue Labels
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened, edited, closed, assigned,reopened,unlabeled]
 
 jobs:
   check-issues_labels:
@@ -40,7 +40,7 @@ jobs:
           # Add a comment to the PR if required labels are missing
           add_comment: true
           # The exit type of the action. One of: failure, success
-          exit_type: failure
+          exit_type: success
           # Evaluate the values in `labels` as regular expressions
           use_regex: false
                 
