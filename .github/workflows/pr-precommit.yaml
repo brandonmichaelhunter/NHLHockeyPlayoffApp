@@ -9,17 +9,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  rebuild-caches:
-    uses: brandonmichaelhunter/NHLHockeyPlayoffApp/.github/workflows/reusable-rebuild-caches.yaml@f78604a03c51efc498fc6a1c0a43d54938a2adb5
-    with:
-      cache_precommit: true
-
   pre-commit:
-    name: Run pre-commit and comment on failure
-    needs: rebuild-caches
-    runs-on: ubuntu-latest
+   name: Run pre-commit and comment on failure
+   runs-on: ubuntu-latest
 
-    steps:
+   steps:
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -29,10 +23,26 @@ jobs:
           python-version: "3.13"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v8.2.0
+        
+      #- name: Install uv
+      #  uses: astral-sh/setup-uv@v4
 
-      - name: Install dependencies
-        run: uv sync --dev
+      #- name: Install dependencies
+      #  run: uv sync --dev
+      - id: install-dev-dependencies
+        name: Install dev dependencies
+        run: |
+          uv sync --locked
+          which uv
+          uv --version
+          uv sync --all-extras --dev
+          uv tool install poethepoet
+          uv tool install pre-commit --with pre-commit-uv
+
+      - id: pre-commit
+        name: Run pre-commit checks
+        run: uv run pre-commit install-hooks
         
       - name: Run pre-commit
         id: precommit
