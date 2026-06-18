@@ -54,6 +54,8 @@ jobs:
         name: Install dev dependencies
         run: |
           uv sync --locked
+          which uv
+          uv --version
           uv sync --all-extras --dev
           uv tool install poethepoet
           uv tool install pre-commit --with pre-commit-uv
