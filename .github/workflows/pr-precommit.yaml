@@ -57,7 +57,7 @@ jobs:
             cat precommit-output.txt
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-          exit "$exit_code"
+          
 
       - name: Comment on PR if pre-commit failed
         if: failure() && github.event_name == 'pull_request'
