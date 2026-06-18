@@ -83,7 +83,7 @@ async def nhl_schedule(session: SessionDep, request:Request):
 @app.get("/get_nhl_schedule", response_class=HTMLResponse)
 async def get_nhl_schedule(session: SessionDep, request:Request):
           nhlPlayoffSchedules:list[nhl_playoff_schedule] = get_nhl_playoff_schedule_games(session=session)
-          return templates.TemplateResponse(request=request, name="nhl_schedule.html", context={"schedules": nhlPlayoffSchedules})
+          return templates.TemplateResponse(request=request, name="nhl_schedule.html", context={"schedules": nhlPlayoffSchedules}  )
 
 @app.get("/get_nhl_teams", response_class=HTMLResponse)
 async def get_nhl_teams(session: SessionDep, request:Request):
@@ -207,7 +207,6 @@ def get_nhl_plusminus_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_go
                 plusminusGoalRanks = [nhl_plusminus_leaders(**row) for row in rows]
 
           return plusminusGoalRanks
-
 def get_nhl_points_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_points_leaders]:
 
           if(TeamName != 0):
@@ -411,12 +410,6 @@ def get_nhl_playoff_schedule_games(session: SessionDep)-> list[nhl_playoff_sched
                 schedule:list[nhl_playoff_schedule] = [nhl_playoff_schedule(**row) for row in rows]
                 return schedule
 
-
-
-
-
-
-
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q:str | None = None):
     return {"item_id": item_id, "q": q}
@@ -424,17 +417,3 @@ def read_item(item_id: int, q:str | None = None):
 @app.get("/appname")
 async def get_app_name():
     return {"app_name": "Hockey Playoff API"}
-
-
-# select distinct a.game_date as gameDate, a.start_time as gameStartTime,
-# away.name as awayTeamName, a.awayTeamScore as awayScore, away.abbrv as awayTeamNameAbbrv, away.logo_url as awayTeamLogoUrl,
-# home.name as homeTeamName, a.homeTeamScore as homeScore, home.abbrv as homeTeamNameAbbrv, home.logo_url as homeTeamLogoUrl,
-# a.seriesTitle as seriesTitle, a.round as playoffRound, a.stationinfo as tvStation,  a.venueName as homeTeamVenueName,
-# a.winningGoaliePlayerID, goalie.first_name as goalieFirstName, goalie.last_name as goalieLastName,  goalie.headshot_url as goalieHeadShotUrl,
-# a.winningGoalScorerPlayerID, skater.first_name as skaterFirstName, skater.last_name as skaterLastName, skater.headshot_url as skaterHeadShotUrl,
-# a.series_info as  seriesInfo
-# from nhl_playoff_schedule_games a inner join teams home on home.id = a.homeTeamId
-# 																        inner join teams away on away.id = a.awayTeamID
-# 																		inner join players goalie on goalie.id = a.winningGoaliePlayerID
-# 																		inner join players skater on skater.id = a.winningGoalScorerPlayerID
-# order by a.game_date desc
