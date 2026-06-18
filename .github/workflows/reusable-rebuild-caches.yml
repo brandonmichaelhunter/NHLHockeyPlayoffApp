@@ -27,10 +27,10 @@ jobs:
       - id: checkout
       #- name: Checkout code
         uses: actions/checkout@v3
-      - id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ inputs.python-version }}
+      #- id: setup-python
+      #  uses: actions/setup-python@v4
+      #  with:
+      #    python-version: ${{ inputs.python-version }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,10 +38,16 @@ jobs:
           python-version: "3.13"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v8
 
+      - name: Debug uv
+        run: |
+            which uv
+            uv --version
       - name: Install dependencies
-        run: uv sync --dev
+        run: |
+          uv sync --locked
+          uv sync --dev
         
       - id: install-dev-dependencies
         if: ${{ inputs.cache_precommit }}
