@@ -14,7 +14,7 @@ on:
 
 jobs:
   check-issues_labels:
-    if: ${{ github.event_name == 'pull_request' || github.event.pull_request }}
+    #if: ${{ github.event_name == 'pull_request' || github.event.pull_request }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
