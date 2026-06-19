@@ -2,7 +2,7 @@ name: Require Pull Request Labels
 on:
   pull_request:
     types: [opened, edited, closed, assigned, reopened, unlabeled]
-  pull_request_comment:
+  issue_comment:
     types: [created, edited]
   pull_request_review:
     types:
