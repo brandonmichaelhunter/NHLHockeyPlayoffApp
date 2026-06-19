@@ -8,42 +8,37 @@ on:
     types:
       - edited
       - submitted
-  pull_request_target:
-    branches:
-      - features
+  #pull_request_target:
+  #  branches:
+  #    - features
 
 jobs:
-  check-issues_labels:
-    #if: ${{ github.event_name == 'pull_request' || github.event.pull_request }}
+  validate:
+    name: Verify
     runs-on: ubuntu-latest
     permissions:
-      issues: write
-    outputs:
-      status: ${{ steps.check-labels.outputs.status }}
+      contents: read
+      pull-requests: write
     steps:
-      - id: check-labels
-        uses: mheap/github-action-required-labels@0ac283b4e65c1fb28ce6079dea5546ceca98ccbe
+      - name: 🏷 Verify PR has a valid label
+        uses: klaasnicolaas/action-pr-labels@v1
+        id: labels
         with:
-          token: ${{ github.token }}
-          labels: |
-            hotfix
-            bug
-            documentation
-            feature
-            testing
-            workflows
-            data
-            infrastructure
-            refactor
-          mode: minimum
-          count: 1
-          message: "You either did not provide a label or have not provided one of the valid labels (hotfix, bug, documentation, feature, testing, workflows, data, infrastructure, refactor). Assigning 'needs label'."
-          add_comment: true
-          exit_type: success
-          use_regex: false
-      - name: Add needs label when missing required label
-        if: ${{ steps.check-labels.outputs.status != 'success' }}
-        uses: actions-ecosystem/action-add-labels@v1
-        with:
-          github_token: ${{ github.token }}
-          labels: needslabel
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          valid-labels: >-
+            hotfix, bug, documentation, feature, testing, workflows,data,infrastructure,refactor
+          invalid-labels: >-
+            duplicate, invalid
+      - name: 🔍 Display validation results
+        run: |
+          echo "Valid: ${{ steps.labels.outputs.is-valid }}"
+          echo "Valid labels: ${{ steps.labels.outputs.valid-labels-found }}"
+          echo "Invalid labels: ${{ steps.labels.outputs.invalid-labels-found }}"
+      - name: Post Comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr comment "$PR_URL" --body "Hello from GitHub Actions! 🚀"    
+
