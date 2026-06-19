@@ -34,6 +34,7 @@ jobs:
             hotfix, bug, documentation, feature, testing, workflows,data,infrastructure,refactor
           invalid-labels: >-
             duplicate, invalid
+          post-comment: true
       - name: 🔍 Display validation results
         run: |
           echo "Valid: ${{ steps.labels.outputs.is-valid }}"
