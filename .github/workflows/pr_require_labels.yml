@@ -21,13 +21,13 @@ jobs:
       pull-requests: write
     steps:
       - name: Debug PR Number
-        run: echo "PR Number ${{ github.event.pull_request.number || github.event.number }}"
+        run: echo "PR Number ${{ github.event.pull_request.number || github.event.issue.number }}"
       - name: 🏷 Verify PR has a valid label
         uses: klaasnicolaas/action-pr-labels@v3.1.1
         id: labels
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-number: ${{ github.event.pull_request.number || github.event.number }}
+          pr-number: ${{ github.event.pull_request.number || github.event.issue.number }}
           valid-labels: >-
             hotfix, bug, documentation, feature, testing, workflows,data,infrastructure,refactor
           invalid-labels: >-
