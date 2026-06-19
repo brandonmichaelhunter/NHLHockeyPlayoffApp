@@ -20,6 +20,8 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Debug PR Number
+        run: echo "PR Number ${{ github.event.pull_request.number || github.event.number }}"
       - name: 🏷 Verify PR has a valid label
         uses: klaasnicolaas/action-pr-labels@v3.1.1
         id: labels
