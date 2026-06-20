@@ -5,7 +5,7 @@ on:
             cache_precommit:
                 required: false
                 type: boolean
-                default: false
+                default: true
             install_dev_deps:
                 required: false
                 type: boolean
@@ -15,6 +15,7 @@ on:
                 required: false
                 type: string
                 default: "3.12"
+    workflow_dispatch:
 permissions:
     contents: read
 
@@ -26,20 +27,35 @@ jobs:
       - id: checkout
       #- name: Checkout code
         uses: actions/checkout@v3
-      - id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ inputs.python-version }}
+      #- id: setup-python
+      #  uses: actions/setup-python@v4
+      #  with:
+      #    python-version: ${{ inputs.python-version }}
 
-      - id: install-uv
-        name: Install uv
-        uses: uses: astral-sh/setup-uv@v8.2.0
-      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+
+      - name: Debug uv
+        run: |
+            which uv
+            uv --version
+      - name: Install dependencies
+        run: |
+          uv sync --locked
+          uv sync --dev
+        
       - id: install-dev-dependencies
         if: ${{ inputs.cache_precommit }}
         name: Install dev dependencies
         run: |
           uv sync --locked
+          which uv
+          uv --version
           uv sync --all-extras --dev
           uv tool install poethepoet
           uv tool install pre-commit --with pre-commit-uv
