@@ -16,7 +16,7 @@ jobs:
       - name: Verify source branch is 'features'
         run: |
           echo "PR Source Branch ${{ github.head_ref }}"
-          if ["${{ github.head_ref}}" != "features"]; then
+          if [ "${{ github.head_ref }}" != "features" ]; then
               echo "ERROR: Only the 'features' branch is allowed to merge to the main branch."
               exit 1
           fi
