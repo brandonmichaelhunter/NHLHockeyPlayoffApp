@@ -1,16 +1,7 @@
 name: Validate Pull Request Labels
 on:
-  pull_request:
-    types: [opened, edited, closed, assigned, reopened, labeled, unlabeled]
-  issue_comment:
-    types: [created, edited]
-  pull_request_review:
-    types:
-      - edited
-      - submitted
-  #pull_request_target:
-  #  branches:
-  #    - features
+  workflow_dispatch: 
+
 
 jobs:
   validate:
