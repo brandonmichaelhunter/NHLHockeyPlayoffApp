@@ -23,7 +23,6 @@ jobs:
           echo "PR Source Branch ${{ github.head_ref }}"
           if [ "${{ github.head_ref }}" != "features" ]; then
             echo "ERROR: Only the 'features' branch is allowed to merge to the main branch."
-            gh pr comment "${{ github.event.pull_request.number }}" --body "❌ Only the \`features\` branch is allowed to merge into \`main\`. Current source branch: \`${{ github.head_ref }}\`."
             exit 1
           fi
           echo "Success: Source branch is valid"
