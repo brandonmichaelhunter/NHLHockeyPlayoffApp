@@ -1,0 +1,36 @@
+name: Validate Pull Request Labels
+on:
+  workflow_dispatch: 
+
+
+jobs:
+  validate:
+    name: Verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Debug PR Number
+        run: echo "PR Number ${{ github.event.pull_request.number || github.event.issue.number }}"
+      - name: Set PR Number
+        run: echo "pr_number=${{ github.event.pull_request.number || github.event.issue.number }}"
+      - name: 🏷 Verify PR has a valid label
+        uses: klaasnicolaas/action-pr-labels@v3.1.1
+        id: labels
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number || github.event.issue.number }}
+          valid-labels: >-
+            hotfix, bug, documentation, feature, testing, workflows,data,infrastructure,refactor
+          #invalid-labels: >-
+          #  duplicate, invalid
+          
+          post-comment: true
+      - name: 🔍 Display validation results
+        run: |
+          echo "Valid: ${{ steps.labels.outputs.is-valid }}"
+          echo "Valid labels: ${{ steps.labels.outputs.valid-labels-found }}"
+          echo "Invalid labels: ${{ steps.labels.outputs.invalid-labels-found }}"
+        continue-on-error: true
+      
