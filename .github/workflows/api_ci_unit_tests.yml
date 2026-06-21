@@ -1,8 +1,13 @@
 name: API - CI - Unit Tests
 on:
-  workflow_call:
+  #workflow_call:
   workflow_dispatch: # This enables manual runs
-
+  push:
+    branches: [features]
+    paths: # look at any changes made to the api code, or api unit tests or the pre-commit-config.yaml
+      - 'src/api/**'
+      - 'tests/api/unit/**'
+      - '.pre-commit-config.yaml'
 env:
   PYTHON_VERSION: '3.13'
 jobs:
@@ -30,7 +35,7 @@ jobs:
     - name: Set up Python
       uses: astral-sh/setup-uv@v4
       with:
-          python-version: "3.13"
+          python-version-file: "pyproject.toml"
           
     - name: Run API Unit Tests
       run: uv run poe unit_test
