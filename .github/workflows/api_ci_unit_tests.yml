@@ -15,6 +15,9 @@ jobs:
     name: Run API Unit Tests
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
+    strategy:
+      matrix:
+        component: [api]
     permissions:
       contents: read
       # packages: write
@@ -33,9 +36,17 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       with:
-          python-version-file: "pyproject.toml"
+          version-file: "pyproject.toml"
           
     - name: Run API Unit Tests
-      run: uv run poe unit_test
+      run: |
+            pytest -m 'api' -v --cov=src/api --cov-report=xml:coverage-api.xml
+        
+ # OPTIONAL: Publish results visually inside GitHub
+    - name: Upload coverage to GitHub Job Summary
+      uses: py-cov-action/python-coverage-comment-action@v3
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: always() # Runs even if tests fail to show what passed/failed

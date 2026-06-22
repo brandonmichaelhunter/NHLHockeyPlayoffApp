@@ -3,19 +3,19 @@ name: API - CI & CD - Pipeline
 
 on:
   push: # Only run on pushes to the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
-    branches: [beetle]
-    paths:
-      - 'src/api/**'
-      - 'tests/api/**'
-      - '.pre-commit-config.yaml'
+    #branches: [beetle]
+    #paths:
+    #  - 'src/api/**'
+    #  - 'tests/api/**'
+    #  - '.pre-commit-config.yaml'
 
-  pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
-    branches: [beetle]
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'src/api/**'
-      - 'tests/api/**'
-      - '.pre-commit-config.yaml'
+  #pull_request: # Only run on PRs targeting the beetle branch, when changes are made to the API code base or the pre-commit-config.yaml file.
+  #  branches: [beetle]
+  #  types: [opened, synchronize, reopened]
+  #  paths:
+  #    - 'src/api/**'
+  #    - 'tests/api/**'
+  #    - '.pre-commit-config.yaml'
 
   workflow_dispatch: # This enables manual runs
 
