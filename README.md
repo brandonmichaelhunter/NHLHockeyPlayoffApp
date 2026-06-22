@@ -71,3 +71,12 @@
   - ```uv tool add pip-audit```
 - How to run pip-audit:
   - ```uv run poe audit``` to run pip-audit on the project dependencies
+
+# Build Validation
+- What is build validation?
+  - Build validation is the process of ensuring that the project can be built and run successfully.
+  - It helps to catch any issues with the code or dependencies before they are deployed.
+- Purpose:
+  - Ensures entire API infrastructure is working correctly and can be built and run successfully.
+- How to run build validation:
+  - ```uv run validate``` to run build validation on the project
