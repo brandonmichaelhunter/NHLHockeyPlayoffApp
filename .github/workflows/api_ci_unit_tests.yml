@@ -2,12 +2,12 @@ name: API - CI - Unit Tests
 on:
   #workflow_call:
   workflow_dispatch: # This enables manual runs
-  push:
-    branches: [features]
-    paths: # look at any changes made to the api code, or api unit tests or the pre-commit-config.yaml
-      - 'src/api/**'
-      - 'tests/api/unit/**'
-      - '.pre-commit-config.yaml'
+  #push:
+  #  branches: [features]
+   # paths: # look at any changes made to the api code, or api unit tests or the pre-commit-config.yaml
+   #   - 'src/api/**'
+   #   - 'tests/api/unit/**'
+   #   - '.pre-commit-config.yaml'
 env:
   PYTHON_VERSION: '3.13'
 jobs:
