@@ -1,10 +1,7 @@
-
 from typing import Annotated, Union
-from fastapi import Depends, FastAPI, HTTPException, Query, Request,Header
-from httpx import request
-from sqlmodel import Field, Session, SQLModel, create_engine, select, text
+from fastapi import Depends, FastAPI, HTTPException, Request, Header
+from sqlmodel import Session, SQLModel, create_engine, select, text
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 import os
@@ -13,13 +10,21 @@ from pathlib import Path
 from .models.nhl_schedules import nhl_playoff_schedule
 
 
-from .models.nhl_teams import nhl_teams, teams,nhl_playoff_dates
-from .models.nhl_stats import nhl_goal_leaders, nhl_goaltending_gaa_leaders, nhl_goaltending_save_percentage_leaders, nhl_goaltending_wins_leaders, nhl_plusminus_leaders, nhl_points_leaders
+from .models.nhl_teams import nhl_teams, teams, nhl_playoff_dates
+from .models.nhl_stats import (
+    nhl_goal_leaders,
+    nhl_goaltending_gaa_leaders,
+    nhl_goaltending_save_percentage_leaders,
+    nhl_goaltending_wins_leaders,
+    nhl_plusminus_leaders,
+    nhl_points_leaders,
+)
+
 print(f"Running in Docker: {os.environ.get('DOCKER_ENV')}")
-if os.environ.get('DOCKER_ENV'):
-   from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+if os.environ.get("DOCKER_ENV"):
+    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 else:
-   from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+    from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_BASE_DIR = Path(__file__).resolve().parent
@@ -27,88 +32,135 @@ TEMPLATE_BASE_DIR = Path(__file__).resolve().parent
 DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, './data/hockeyplayoff.db')}"
 engine = create_engine(DATABASE_URL, echo=True)
 
+
 def get_session():
     with Session(engine) as session:
         yield session
+
 
 SessionDep = Annotated[Session, Depends(get_session)]
 app = FastAPI()
 
 templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
 
+
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "alive"}
+
 
 @app.get("/health/live")
 async def healthlive():
     return {"status": "alive"}
 
+
 async def check_database_connection():
-          try:
-                with engine.connect() as conn:
-                     return True
-          except:
+    try:
+        with engine.connect() as conn:
+            if conn is not None:
+                return True
+            else:
                 return False
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        return False
+
 
 @app.get("/health/ready")
 async def healthready():
-      db_ok = await check_database_connection()
-      if not db_ok:
-            raise HTTPException(status_code=503, detail="Database connection failed")
-      return "Database connection successful"
+    db_ok = await check_database_connection()
+    if not db_ok:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    return "Database connection successful"
+
 
 @app.get("/nhl_scores", response_class=HTMLResponse)
-async def read_nhl_scores(session: SessionDep, request: Request,  hx_request: Annotated[Union[str, None], Header()] = None, nhlScoreDateSelect:str=None):
+async def read_nhl_scores(
+    session: SessionDep,
+    request: Request,
+    hx_request: Annotated[Union[str, None], Header()] = None,
+    nhlScoreDateSelect: str = None,
+):
     sqlStmt = select(nhl_scores).where(nhl_scores.date == nhlScoreDateSelect)
     nhlScores = session.exec(sqlStmt).all()
 
     if hx_request != "false":
-       resp = templates.TemplateResponse(request=request, name="nhlscores.html", context={"nhlScores": nhlScores})
-       return resp
+        resp = templates.TemplateResponse(
+            request=request, name="nhlscores.html", context={"nhlScores": nhlScores}
+        )
+        return resp
     return JSONResponse(content=jsonable_encoder(nhlScores))
 
+
 @app.get("/", response_class=HTMLResponse)
-async def index(request:Request):
+async def index(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
+
 @app.get("/stats", response_class=HTMLResponse)
-async def nhl_stats(session: SessionDep, request:Request):
-          return templates.TemplateResponse(request=request, name="stats.html", context={})
+async def nhl_stats(session: SessionDep, request: Request):
+    return templates.TemplateResponse(request=request, name="stats.html", context={})
+
 
 @app.get("/schedule", response_class=HTMLResponse)
-async def nhl_schedule(session: SessionDep, request:Request):
-          return templates.TemplateResponse(request=request, name="schedule.html", context={})
+async def nhl_schedule(session: SessionDep, request: Request):
+    return templates.TemplateResponse(request=request, name="schedule.html", context={})
+
 
 @app.get("/get_nhl_schedule", response_class=HTMLResponse)
-async def get_nhl_schedule(session: SessionDep, request:Request):
-          nhlPlayoffSchedules:list[nhl_playoff_schedule] = get_nhl_playoff_schedule_games(session=session)
-          return templates.TemplateResponse(request=request, name="nhl_schedule.html", context={"schedules": nhlPlayoffSchedules}  )
+async def get_nhl_schedule(session: SessionDep, request: Request):
+    nhlPlayoffSchedules: list[nhl_playoff_schedule] = get_nhl_playoff_schedule_games(
+        session=session
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="nhl_schedule.html",
+        context={"schedules": nhlPlayoffSchedules},
+    )
+
 
 @app.get("/get_nhl_teams", response_class=HTMLResponse)
-async def get_nhl_teams(session: SessionDep, request:Request):
-          teams = get_nhl_teams(session=session)
-          return templates.TemplateResponse(request=request, name="nhl_teams_options.html", context={"teams": teams})
+async def get_nhl_teams(session: SessionDep, request: Request):
+    teams = get_nhl_teams_data(session=session)
+    return templates.TemplateResponse(
+        request=request, name="nhl_teams_options.html", context={"teams": teams}
+    )
+
 
 @app.get("/get_nhl_stats", response_class=HTMLResponse)
-async def get_nhl_stats(session: SessionDep, request:Request, teams: int=0):
-          print(f"Getting NHL Stats for Team: {teams}")
-          playerGoalRanks = get_nhl_goal_leaders(session=session, TeamName=teams)
-          playerPlusMinusRanks = get_nhl_plusminus_leaders(session=session, TeamName=teams)
-          playerPointsRanks = get_nhl_points_leaders(session=session, TeamName=teams)
-          goalieSavePercentageRanks = get_nhl_goaltending_save_percentage_leaders(session=session, TeamName=teams)
-          goalieGAARanks = get_nhl_goaltending_gaa_leaders(session=session, TeamName=teams)
-          goalieWins = get_nhl_goaltending_wins_leaders(session=session, TeamName=teams)
-          return templates.TemplateResponse(request=request, name="nhlstats_leaders.html",
-                                            context={"playerGoalRanks": playerGoalRanks,
-                                                     "playerPlusMinusRanks": playerPlusMinusRanks,
-                                                     "playerPointsRanks": playerPointsRanks,
-                                                     "goalieSavePercentageRanks": goalieSavePercentageRanks,
-                                                     "goalieGAARanks": goalieGAARanks,
-                                                     "goalieWinsRanks": goalieWins})
+async def get_nhl_stats(session: SessionDep, request: Request, teams: int = 0):
+    print(f"Getting NHL Stats for Team: {teams}")
+    playerGoalRanks = get_nhl_goal_leaders(session=session, TeamName=teams)
+    playerPlusMinusRanks = get_nhl_plusminus_leaders(session=session, TeamName=teams)
+    playerPointsRanks = get_nhl_points_leaders(session=session, TeamName=teams)
+    goalieSavePercentageRanks = get_nhl_goaltending_save_percentage_leaders(
+        session=session, TeamName=teams
+    )
+    goalieGAARanks = get_nhl_goaltending_gaa_leaders(session=session, TeamName=teams)
+    goalieWins = get_nhl_goaltending_wins_leaders(session=session, TeamName=teams)
+    return templates.TemplateResponse(
+        request=request,
+        name="nhlstats_leaders.html",
+        context={
+            "playerGoalRanks": playerGoalRanks,
+            "playerPlusMinusRanks": playerPlusMinusRanks,
+            "playerPointsRanks": playerPointsRanks,
+            "goalieSavePercentageRanks": goalieSavePercentageRanks,
+            "goalieGAARanks": goalieGAARanks,
+            "goalieWinsRanks": goalieWins,
+        },
+    )
+
 
 @app.get("/get_playoff_game_dates", response_class=JSONResponse)
-def get_avaliable_nhl_playoff_game_dates(session: SessionDep)-> list[nhl_playoff_dates]:
+def get_avaliable_nhl_playoff_game_dates(
+    session: SessionDep,
+) -> list[nhl_playoff_dates]:
     sqlStmt = text("select distinct date  from nhl_scores  order by date desc")
     results = session.execute(sqlStmt)
     rows = results.mappings().all()
@@ -116,17 +168,21 @@ def get_avaliable_nhl_playoff_game_dates(session: SessionDep)-> list[nhl_playoff
 
     return JSONResponse(content=jsonable_encoder(gameDates))
 
-def get_nhl_teams(session: SessionDep)-> list[nhl_teams]:
+
+def get_nhl_teams_data(session: SessionDep) -> list[nhl_teams]:
     sqlStmt = text("select id, name as team_name from teams order by name")
     results = session.execute(sqlStmt)
     rows = results.mappings().all()
     teamList: list[teams] = [teams(**row) for row in rows]
     return teamList
 
-def get_nhl_goal_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goal_leaders]:
-          print(f"Getting NHL Goal Leaders for Team: {TeamName}")
-          if(TeamName != 0):
-                query = text("""
+
+def get_nhl_goal_leaders(
+    session: SessionDep, TeamName: int = 0
+) -> list[nhl_goal_leaders]:
+    print(f"Getting NHL Goal Leaders for Team: {TeamName}")
+    if TeamName != 0:
+        query = text("""
                         select distinct playerID as player_id, Sum(goals) as total_goals,
                             RANK() OVER (ORDER BY SUM(goals) desc) as league_ranking,
                             b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -141,11 +197,11 @@ def get_nhl_goal_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goal_le
                         order by total_goals  desc
                         limit 5
                 """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                playerGoalRanks = [nhl_goal_leaders(**row) for row in rows]
-          else:
-                query = text("""
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        playerGoalRanks = [nhl_goal_leaders(**row) for row in rows]
+    else:
+        query = text("""
                         select distinct playerID as player_id, Sum(goals) as total_goals,
                                RANK() OVER (ORDER BY SUM(goals) desc) as league_ranking,
                                b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -160,15 +216,19 @@ def get_nhl_goal_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goal_le
                         order by total_goals  desc
                         limit 5
                 """)
-                results = session.execute(query)
-                rows = results.mappings().all()
-                playerGoalRanks = [nhl_goal_leaders(**row) for row in rows]
+        results = session.execute(query)
+        rows = results.mappings().all()
+        playerGoalRanks = [nhl_goal_leaders(**row) for row in rows]
 
-          return playerGoalRanks
-def get_nhl_plusminus_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goal_leaders]:
+    return playerGoalRanks
 
-          if(TeamName != 0):
-                query = text("""
+
+def get_nhl_plusminus_leaders(
+    session: SessionDep, TeamName: int = 0
+) -> list[nhl_goal_leaders]:
+
+    if TeamName != 0:
+        query = text("""
                         select distinct playerID as player_id, Sum(plusMinus) as plus_minus,
                             RANK() OVER (ORDER BY SUM(plusMinus) desc) as league_ranking,
                             b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -183,11 +243,11 @@ def get_nhl_plusminus_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_go
                         order by plus_minus  desc
                         limit 5
                 """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                plusminusGoalRanks = [nhl_plusminus_leaders(**row) for row in rows]
-          else:
-                query = text("""
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        plusminusGoalRanks = [nhl_plusminus_leaders(**row) for row in rows]
+    else:
+        query = text("""
                         select distinct playerID as player_id, Sum(plusMinus) as plus_minus,
                                RANK() OVER (ORDER BY SUM(plusMinus) desc) as league_ranking,
                                b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -202,15 +262,19 @@ def get_nhl_plusminus_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_go
                         order by plus_minus  desc
                         limit 5
                 """)
-                results = session.execute(query)
-                rows = results.mappings().all()
-                plusminusGoalRanks = [nhl_plusminus_leaders(**row) for row in rows]
+        results = session.execute(query)
+        rows = results.mappings().all()
+        plusminusGoalRanks = [nhl_plusminus_leaders(**row) for row in rows]
 
-          return plusminusGoalRanks
-def get_nhl_points_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_points_leaders]:
+    return plusminusGoalRanks
 
-          if(TeamName != 0):
-                query = text("""
+
+def get_nhl_points_leaders(
+    session: SessionDep, TeamName: int = 0
+) -> list[nhl_points_leaders]:
+
+    if TeamName != 0:
+        query = text("""
                         select distinct playerID as player_id, Sum(a.points) as total_points,
                             RANK() OVER (ORDER BY SUM(a.points) desc) as league_ranking,
                             b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -225,11 +289,11 @@ def get_nhl_points_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_point
                         order by total_points  desc
                         limit 5
                 """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                pointsGoalRanks = [nhl_points_leaders(**row) for row in rows]
-          else:
-                query = text("""
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        pointsGoalRanks = [nhl_points_leaders(**row) for row in rows]
+    else:
+        query = text("""
                         select distinct playerID as player_id, Sum(a.points) as total_points,
                             RANK() OVER (ORDER BY SUM(a.points) desc) as league_ranking,
                             b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -244,15 +308,19 @@ def get_nhl_points_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_point
                         order by total_points  desc
                         limit 5
                 """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                pointsGoalRanks = [nhl_points_leaders(**row) for row in rows]
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        pointsGoalRanks = [nhl_points_leaders(**row) for row in rows]
 
-          return pointsGoalRanks
-def get_nhl_goaltending_save_percentage_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goaltending_save_percentage_leaders]:
+    return pointsGoalRanks
 
-          if(TeamName != 0):
-                query = text("""
+
+def get_nhl_goaltending_save_percentage_leaders(
+    session: SessionDep, TeamName: int = 0
+) -> list[nhl_goaltending_save_percentage_leaders]:
+
+    if TeamName != 0:
+        query = text("""
                         select distinct playerID as player_id, (round(avg(a.savePctg),3)) as save_percentage,
                             RANK() OVER (ORDER BY round(avg(a.savePctg),3) desc) as league_ranking,
                             b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -267,11 +335,13 @@ def get_nhl_goaltending_save_percentage_leaders(session: SessionDep, TeamName:in
                         order by save_percentage  desc
                         limit 5
                 """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                savePercentageRanks = [nhl_goaltending_save_percentage_leaders(**row) for row in rows]
-          else:
-                query = text("""
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        savePercentageRanks = [
+            nhl_goaltending_save_percentage_leaders(**row) for row in rows
+        ]
+    else:
+        query = text("""
                         select distinct playerID as player_id, (round(avg(a.savePctg),3)) as save_percentage,
                             RANK() OVER (ORDER BY (round(avg(a.savePctg),3))  desc) as league_ranking,
                             b.first_name as player_firstname, b.last_name  as player_lastname,
@@ -286,15 +356,21 @@ def get_nhl_goaltending_save_percentage_leaders(session: SessionDep, TeamName:in
                         order by save_percentage  desc
                         limit 5
                 """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                savePercentageRanks = [nhl_goaltending_save_percentage_leaders(**row) for row in rows]
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        savePercentageRanks = [
+            nhl_goaltending_save_percentage_leaders(**row) for row in rows
+        ]
 
-          return savePercentageRanks
-def get_nhl_goaltending_gaa_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goaltending_gaa_leaders]:
+    return savePercentageRanks
 
-          if(TeamName != 0):
-                query = text("""
+
+def get_nhl_goaltending_gaa_leaders(
+    session: SessionDep, TeamName: int = 0
+) -> list[nhl_goaltending_gaa_leaders]:
+
+    if TeamName != 0:
+        query = text("""
                         select distinct playerID as player_id,
                         avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2)) as gaa,
                         RANK() OVER (ORDER BY avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2))  asc) as league_ranking,
@@ -314,11 +390,11 @@ def get_nhl_goaltending_gaa_leaders(session: SessionDep, TeamName:int=0)-> list[
                         order by gaa  asc
                         limit 5
                         """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                gaaRanks = [nhl_goaltending_gaa_leaders(**row) for row in rows]
-          else:
-                query = text("""
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        gaaRanks = [nhl_goaltending_gaa_leaders(**row) for row in rows]
+    else:
+        query = text("""
                         select distinct playerID as player_id,
                         avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2)) as gaa,
                         RANK() OVER (ORDER BY avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2))  asc) as league_ranking,
@@ -338,15 +414,18 @@ def get_nhl_goaltending_gaa_leaders(session: SessionDep, TeamName:int=0)-> list[
                         order by gaa  asc
                         limit 5
                         """)
-                results = session.execute(query)
-                rows = results.mappings().all()
-                gaaRanks = [nhl_goaltending_gaa_leaders(**row) for row in rows]
-          return gaaRanks
+        results = session.execute(query)
+        rows = results.mappings().all()
+        gaaRanks = [nhl_goaltending_gaa_leaders(**row) for row in rows]
+    return gaaRanks
 
-def get_nhl_goaltending_wins_leaders(session: SessionDep, TeamName:int=0)-> list[nhl_goaltending_wins_leaders]:
 
-          if(TeamName != 0):
-                query = text("""
+def get_nhl_goaltending_wins_leaders(
+    session: SessionDep, TeamName: int = 0
+) -> list[nhl_goaltending_wins_leaders]:
+
+    if TeamName != 0:
+        query = text("""
                         SELECT  gwl.player_id, gwl.wins,
                                 RANK() OVER (ORDER BY gwl.wins DESC) as league_ranking,
                                 gwl.first_name as player_firstname,
@@ -363,11 +442,11 @@ def get_nhl_goaltending_wins_leaders(session: SessionDep, TeamName:int=0)-> list
 							wins DESC
 						LIMIT 5;
                         """)
-                results = session.execute(query, {"TeamName": TeamName})
-                rows = results.mappings().all()
-                wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
-          else:
-                query = text("""
+        results = session.execute(query, {"TeamName": TeamName})
+        rows = results.mappings().all()
+        wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
+    else:
+        query = text("""
                         SELECT gwl.player_id, gwl.wins,
                                 RANK() OVER (ORDER BY gwl.wins DESC) as league_ranking,
                                 gwl.first_name as player_firstname,
@@ -383,15 +462,15 @@ def get_nhl_goaltending_wins_leaders(session: SessionDep, TeamName:int=0)-> list
 							wins DESC
 						LIMIT 5;
                         """)
-                results = session.execute(query)
-                rows = results.mappings().all()
-                wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
-          return wins
-
-def get_nhl_playoff_schedule_games(session: SessionDep)-> list[nhl_playoff_schedule]:
+        results = session.execute(query)
+        rows = results.mappings().all()
+        wins = [nhl_goaltending_wins_leaders(**row) for row in rows]
+    return wins
 
 
-                query = text("""
+def get_nhl_playoff_schedule_games(session: SessionDep) -> list[nhl_playoff_schedule]:
+
+    query = text("""
                         select distinct a.game_date as gameDate, a.start_time as gameStartTime,
                         away.name as awayTeamName, a.awayTeamScore as awayScore, away.abbrv as awayTeamNameAbbrv, away.logo_url as awayTeamLogoUrl,
                         home.name as homeTeamName, a.homeTeamScore as homeScore, home.abbrv as homeTeamNameAbbrv, home.logo_url as homeTeamLogoUrl,
@@ -405,14 +484,16 @@ def get_nhl_playoff_schedule_games(session: SessionDep)-> list[nhl_playoff_sched
                                                                                                 inner join players skater on skater.id = a.winningGoalScorerPlayerID
                         order by a.game_date desc ;
                         """)
-                results = session.execute(query)
-                rows = results.mappings().all()
-                schedule:list[nhl_playoff_schedule] = [nhl_playoff_schedule(**row) for row in rows]
-                return schedule
+    results = session.execute(query)
+    rows = results.mappings().all()
+    schedule: list[nhl_playoff_schedule] = [nhl_playoff_schedule(**row) for row in rows]
+    return schedule
+
 
 @app.get("/items/{item_id}")
-def read_item(item_id: int, q:str | None = None):
+def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
+
 
 @app.get("/appname")
 async def get_app_name():

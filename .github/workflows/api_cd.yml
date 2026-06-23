@@ -1,0 +1,416 @@
+name: API - Continous Deployment
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+        - 'src/api/**'
+        - 'tests/api/**'
+        - '.pre-commit-config.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+        - 'src/api/**'
+        - 'tests/api/**'
+        - '.pre-commit-config.yaml'
+permissions:
+    contents: read
+    id-token: write
+    pull-requests: write
+
+jobs:
+    # Ensures the API can be built successfully and basic infrastructure is working before running more expensive checks.
+    api-build-validation:
+      name: API - Build Validation
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        - name: Set up Python
+          uses: astral-sh/setup-uv@v4
+          with:
+            python-version: "3.13"
+        - name: Validate API Build
+          id: validate
+          shell: bash
+          run: |
+            set +e
+            uv run validate 2>&1 | tee validate-output.txt
+            exit_code=${PIPESTATUS[0]}
+            {
+              echo "exit_code=$exit_code"
+              echo "output<<EOF"
+              cat validate-output.txt
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+
+        - name: Comment on PR if validate failed
+          if: github.event_name == 'pull_request' && steps.validate.outputs.exit_code != '0'
+          uses: actions/github-script@v7
+          env:
+            VALIDATE_OUTPUT: ${{ steps.validate.outputs.output }}
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+              const body = [
+                "## API build validation failed",
+                "",
+                "```text",
+                (process.env.VALIDATE_OUTPUT || "No validate output captured").slice(0, 60000),
+                "```"
+              ].join("\n");
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+
+        - name: Fail job if validate failed
+          if: always() && steps.validate.outputs.exit_code != '0'
+          run: |
+            echo "uv run validate failed"
+            exit 1
+    
+    # Runs pre-commit checks and pip-audit to catch any style issues or vulnerable dependencies before running unit tests.      
+    api-static-code-analysis:
+      name: Run API Static Code Analysis and Dependency Checker
+      runs-on: ubuntu-latest
+      needs: api-build-validation
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.13"
+
+      - name: Run pre-commit
+        id: precommit
+        shell: bash
+        run: |
+          set +e
+          uv run pre-commit run --all-files 2>&1 | tee precommit-output.txt
+          exit_code=${PIPESTATUS[0]}
+          {
+            echo "exit_code=$exit_code"
+            echo "output<<EOF"
+            cat precommit-output.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+      # If pre-commit fails, make a comment on the current PR with the output of the pre-commit command.
+      # Limit the output to 60000 characters to avoid hitting GitHub's comment size limit.
+      - name: Comment on PR if pre-commit failed
+        if: github.event_name == 'pull_request' && steps.precommit.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        env:
+          PRECOMMIT_OUTPUT: ${{ steps.precommit.outputs.output }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = [
+              "## pre-commit failed",
+              "",
+              "```text",
+              (process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured").slice(0, 60000),
+              "```"
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Fail job if static checks failed
+        if: always()
+        run: |
+          if [ "${{ steps.precommit.outputs.exit_code }}" != "0" ]; then
+            echo "pre-commit failed"
+            exit 1
+          fi
+    
+    # Runs unit tests
+    api-unit-tests:
+      name: Run API Unit Tests
+      runs-on: ubuntu-latest
+      needs: api-build-validation
+      environment: NHLHockeyAppEnv
+
+      permissions:
+          contents: read
+          pull-requests: write
+      # packages: write
+      steps:
+       # This step checks out the PR's code when triggered by a workflow_run event from a PR.
+      # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
+        - uses: actions/checkout@v4
+          if: github.event_name == 'workflow_run'
+          with:
+            ref: ${{ github.event.workflow_run.head_sha }}
+
+        # This is the standard checkout for non-workflow_run triggers (push, pull_request).
+        - uses: actions/checkout@v4
+          if: github.event_name != 'workflow_run'
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Set up Python
+          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            version-file: "pyproject.toml"
+            
+        - name: Run API Unit Tests
+          run: |
+                pytest -m 'api and unit' -v --cov=src/api --cov-report=xml:coverage-api-unit.xml
+            
+        # OPTIONAL: Publish results visually inside GitHub
+        - name: Upload coverage to GitHub Job Summary
+          uses: py-cov-action/python-coverage-comment-action@v3
+          with:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          if: always() # Runs even if tests fail to show what passed/failed
+    
+    # Runs integration tests against a deployed test environment to ensure the API is working correctly with all dependencies and infrastructure before merging into main.
+    api-integration-tests:
+      name: Run API Integration Tests
+      runs-on: ubuntu-latest
+      needs: api-build-validation
+      environment: NHLHockeyAppEnv
+
+      permissions:
+          contents: read
+          pull-requests: write
+      # packages: write
+      steps:
+       # This step checks out the PR's code when triggered by a workflow_run event from a PR.
+      # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
+        - uses: actions/checkout@v4
+          if: github.event_name == 'workflow_run'
+          with:
+            ref: ${{ github.event.workflow_run.head_sha }}
+
+        # This is the standard checkout for non-workflow_run triggers (push, pull_request).
+        - uses: actions/checkout@v4
+          if: github.event_name != 'workflow_run'
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Set up Python
+          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            version-file: "pyproject.toml"
+
+        - name: Run API Integration Tests
+          run: |
+                pytest -m 'api and integration' -v --cov=src/api --cov-report=xml:coverage-api-integration.xml
+            
+        # OPTIONAL: Publish results visually inside GitHub
+        - name: Upload coverage to GitHub Job Summary
+          uses: py-cov-action/python-coverage-comment-action@v3
+          with:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          if: always() # Runs even if tests fail to show what passed/failed
+    
+    # Runs pip-audit to check for vulnerable dependencies in the API code base and any security scanning tools configured in the project to catch potential security issues before merging into main.  
+    api-security-scanning:
+      name: Run API Security Scanning
+      runs-on: ubuntu-latest
+      needs: api-build-validation
+      environment: NHLHockeyAppEnv
+      permissions:
+        contents: read
+        pull-requests: write
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Set up Python
+          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            version-file: "pyproject.toml"
+
+        - name: Run API Security Scanning
+          run: |
+            uv run security-scan
+        # Run pip-audit to check for any vulnerable dependencies in the API code base.
+        - name: Generate timestamp
+          id: timestamp
+          run: echo "report_time=$(date +'%Y-%m-%d-%H-%M')" >> $GITHUB_OUTPUT
+
+        - name: Run pip-audit and save to file
+          id: audit
+          run: |
+            set +e
+            FILENAME="pip-audit-report-${{ steps.timestamp.outputs.report_time }}.md"
+            uv run pip-audit --output $FILENAME --format markdown
+            exit_code=$?
+            echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+            echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+            exit 0
+
+        - name: Read pip-audit report
+          id: audit_report
+          uses: actions/github-script@v7
+          with:
+            script: |
+              const fs = require('fs');
+              const filename = "${{ steps.audit.outputs.filename }}";
+              const report = fs.readFileSync(filename, 'utf8');
+              core.setOutput('report', report);
+            result-encoding: string
+
+        - name: Comment on PR with pip-audit results
+          if: github.event_name == 'pull_request' && steps.audit.outputs.exit_code != '0'
+          uses: actions/github-script@v7
+          with:
+            script: |
+              const report = `${{ steps.audit_report.outputs.report }}`;
+              if (report.trim() === 'No vulnerabilities found') {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: '✅ `pip-audit` found no vulnerabilities.'
+                });
+              } else {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `
+                    ### 🚨 Pip-audit Vulnerability Report
+
+                    *Report generated at: ${{ steps.timestamp.outputs.report_time }}*
+
+
+                    ${report}
+                  `
+                });
+              }
+          env:
+            AUDIT_REPORT: ${{ steps.audit_report.outputs.report }}
+
+        - name: Fail job if static checks failed
+          if: always()
+          run: |
+            if [ "${{ steps.audit.outputs.exit_code }}" != "0" ]; then
+              echo "pip-audit found vulnerabilities"
+              exit 1
+            fi
+
+    release-and-deploy:
+      name: Release and Deploy API
+      runs-on: ubuntu-latest
+      needs: [api-build-validation, api-static-code-analysis, api-unit-tests, api-integration-tests, api-security-scanning]
+      #if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+      if: github.event.pull_request.merged == true
+      permissions:
+        contents: read
+        pull-requests: write
+        packages: write
+        id-token: write
+      environment: NHLHockeyAppEnv
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+              ref: main #${{ github.event.pull_request.head.sha }}
+              fetch-depth: 0 # Fetch full history to allow for accurate git commands if needed
+        - name: Parse SemVer Level from PR Labels
+          id: semver_label
+          uses: rapidstack/pr-label-semver-action@v1.3.6
+          #with:
+            #default_bump: patch 
+           
+
+        - name: Set up uv
+          uses: astral-sh/setup-uv@v5
+          with:
+            enable-cache: true
+
+        - name: Set up Python
+          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+          with:
+            version-file: "pyproject.toml"
+
+        - name: Bump Version and Sync Lockfile
+          run: |
+            uv version --bump ${{ steps.semver_label.outputs.level }}
+            uv sync     
+
+        - name: Push Version Update, New Branch, and Tag
+          id: git_meta
+          run: |
+                # 1. Setup standard automation identity
+                git config --local user.email "github-actions[bot]@users.noreply.github.com"
+                git config --local user.name "github-actions[bot]"
+                
+                # 2. Capture clean version variables
+                NEW_VERSION=$(uv version --short)
+                TAG_NAME="v$NEW_VERSION"
+                BRANCH_NAME="release/v$NEW_VERSION"
+                
+                # 3. Commit version updates directly onto 'main'
+                git add pyproject.toml uv.lock
+                git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+                
+                # 4. Bind the new annotated Tag to this commit point
+                git tag -a "$TAG_NAME" -m "Release version $NEW_VERSION"
+                
+                # 5. Spawn the independent release branch from this same commit point
+                git branch "$BRANCH_NAME"
+                
+                # 6. Push all new pointers (main updates, new branch, and tags) to the remote origin
+                git push origin main
+                git push origin "$BRANCH_NAME"
+                git push origin --tags
+                
+                # Export tag string safely for downstream release notes actions
+                echo "tag_version=$TAG_NAME" >> $GITHUB_OUTPUT
+        
+        - name: Create GitHub Release
+          id: create_release
+          uses: softprops/action-gh-release@v3
+          with:
+            tag_name: ${{ steps.git_meta.outputs.tag_version }}
+            name: Release ${{ steps.git_meta.outputs.tag_version }}
+            generate_release_notes: true 
+        
+        - name: Docker Login/Push
+          uses: docker/login-action@v3
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        
+        - name: Extract Metadata
+          id: meta
+          uses: docker/metadata-action@v5
+          with:
+           images: ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.git_meta.outputs.tag_version }}
+
+        - name: Build and Push
+          uses: docker/build-push-action@v5
+          with:
+            file: ./src/Dockerfile
+            push: true
+            tags: |
+              ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.git_meta.outputs.tag_version }}
+              ghcr.io/${{ github.actor }}/nhlplayoffapp:latest  
+        
+        # - name: Set up Kubeconfig Context
+        #   uses: azure/k8s-set-context@v3
+        #   with:
+        #     method: kubeconfig
+        #     kubeconfig: ${{ secrets.KUBECONFIG }}
+
+        # - name: Force Kubernetes to Pull the New Tag
+        #   run: |
+        #    # Imperatively rewrites the live cluster image target to the newly built tag
+        #    kubectl set image deployment/my-app-deployment web-container=ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.git_meta.outputs.tag_version }}
