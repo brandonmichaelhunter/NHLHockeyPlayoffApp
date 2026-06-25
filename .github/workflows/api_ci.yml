@@ -11,7 +11,7 @@ on:
 
   pull_request:
     branches: [ main, features ] 
-    
+    types: [ opened, synchronize, reopened ]
     paths:
         - 'src/api/**'
         - 'tests/api/**'
