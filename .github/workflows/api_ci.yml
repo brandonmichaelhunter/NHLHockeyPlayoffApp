@@ -107,20 +107,52 @@ jobs:
           exit 0
       # If pre-commit fails, make a comment on the current PR with the output of the pre-commit command.
       # Limit the output to 60000 characters to avoid hitting GitHub's comment size limit.
+      #- name: Comment on PR if pre-commit failed
+      #  if: github.event_name == 'pull_request' && steps.precommit.outputs.exit_code != '0'
+      #  uses: actions/github-script@v7
+      #  env:
+      #    PRECOMMIT_OUTPUT: ${{ steps.precommit.outputs.output }}
+      #  with:
+      #    github-token: ${{ secrets.GITHUB_TOKEN }}
+      #    script: |
+      #      const body = [
+      #        "## pre-commit failed",
+      #        "",
+      #        "```text",
+      #        (process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured").slice(0, 60000),
+      #        "```"
+      #      ].join("\n");
+
+      #      await github.rest.issues.createComment({
+      #        owner: context.repo.owner,
+      #        repo: context.repo.repo,
+      #        issue_number: context.issue.number,
+      #        body
+      #      });
       - name: Comment on PR if pre-commit failed
         if: github.event_name == 'pull_request' && steps.precommit.outputs.exit_code != '0'
         uses: actions/github-script@v7
         env:
-          PRECOMMIT_OUTPUT: ${{ steps.precommit.outputs.output }}
+          PRECOMMIT_OUTPUT: \${{ steps.precommit.outputs.output }}
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: \${{ secrets.GITHUB_TOKEN }}
           script: |
+            const rawOutput = process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured";
+            
+            // Safe fallback if logs exceed GitHub's absolute API comment limits
+            const logContent = rawOutput.length > 60000 ? rawOutput.slice(0, 60000) + "\n...[Truncated, view workflow artifacts for full logs]" : rawOutput;
+
             const body = [
-              "## pre-commit failed",
+              "## ❌ pre-commit failed",
+              "",
+              "<details>",
+              "<summary>📄 Click here to expand the full precommit-output.txt log</summary>",
               "",
               "```text",
-              (process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured").slice(0, 60000),
-              "```"
+              logContent,
+              "```",
+              "",
+              "</details>"
             ].join("\n");
 
             await github.rest.issues.createComment({
