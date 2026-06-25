@@ -10,7 +10,8 @@ on:
         - '.pre-commit-config.yaml'
 
   pull_request:
-    branches: [ main ] 
+    branches: [ main, features ] 
+    
     paths:
         - 'src/api/**'
         - 'tests/api/**'
