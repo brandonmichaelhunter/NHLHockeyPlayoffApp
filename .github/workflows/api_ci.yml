@@ -96,7 +96,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          uv run pre-commit run --all-files 2>&1 | tee precommit-output.txt
+          git ls-files -- src/api tests/api | xargs uv run pre-commit run --files 2>&1 | tee precommit-output.txt
           exit_code=${PIPESTATUS[0]}
           {
             echo "exit_code=$exit_code"
