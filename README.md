@@ -2,7 +2,7 @@
 - NHLHockeyPlayoffApp is a project that has two main functions:
   - An Python and FastAPI app that displays NHL Hockey Games, Stats and Schedule data.
   - An ETL that extracts NHL Hockey Games, Stats and Schedule data from an API into a Sqlite database.
-- Test
+- Test New 
 # Install uv
  - What is uv?
    - Uv a Python package and project manager writen in Rust.
