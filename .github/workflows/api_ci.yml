@@ -190,11 +190,13 @@ jobs:
             ref: ${{ github.event.workflow_run.head_sha }}
 
         # This is the standard checkout for non-workflow_run triggers (push, pull_request).
-        - uses: actions/checkout@v4
-          if: github.event_name != 'workflow_run'
-        - name: Checkout
+        #- uses: actions/checkout@v4
+          #if: github.event_name != 'workflow_run'
+        #- name: Checkout
+          #uses: actions/checkout@v4
+        - name: Checkout repository code
           uses: actions/checkout@v4
-
+          
         - name: Set up Python
           uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
           with:
