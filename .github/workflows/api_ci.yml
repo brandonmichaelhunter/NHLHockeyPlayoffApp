@@ -194,6 +194,7 @@ jobs:
           #if: github.event_name != 'workflow_run'
         #- name: Checkout
           #uses: actions/checkout@v4
+          
         - name: Checkout repository code
           uses: actions/checkout@v4
           
@@ -203,7 +204,8 @@ jobs:
             python-version: "3.13"
             version-file: "/home/runner/work/NHLHockeyPlayoffApp/pyproject.toml"
         - name: Run ls command
-          run: ls /home/runner/work
+          run: |
+                ls /home/runner/work
         - name: Run API Unit Tests
           run: |
                 pytest -m 'api and unit' -v --cov=src/api --cov-report=xml:coverage-api-unit.xml
