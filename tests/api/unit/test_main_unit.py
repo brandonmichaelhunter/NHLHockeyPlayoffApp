@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 from src.api.hockeyplayoffapi import main as main_module
 from fastapi.responses import HTMLResponse
-# Update Documentation, test test
+# Update Documentation, test test test
 @pytest.mark.unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_json_without_hx_header():
