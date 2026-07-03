@@ -1,25 +1,27 @@
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import SQLModel
+
+
 class nhl_playoff_schedule(SQLModel, table=False):
-      gameDate:str=""
-      gameStartTime:str=""
-      awayTeamName:str=""
-      awayScore:int=0
-      awayTeamNameAbbrv:str=""
-      awayTeamLogoUrl:str=""
-      homeTeamName:str=""
-      homeScore:int=0
-      homeTeamNameAbbrv:str=""
-      homeTeamLogoUrl:str=""
-      seriesTitle:str=""
-      playoffRound:str=""
-      tvStation:str=""
-      homeTeamVenueName:str=""
-      winningGoaliePlayerID:int=0
-      goalieFirstName:str=""
-      goalieLastName:str=""
-      goalieHeadShotUrl:str=""
-      winningGoalScorerPlayerID:int=0
-      skaterFirstName:str=""
-      skaterLastName:str=""
-      skaterHeadShotUrl:str=""
-      seriesInfo:str=""
+    gameDate: str = ""
+    gameStartTime: str = ""
+    awayTeamName: str = ""
+    awayScore: int = 0
+    awayTeamNameAbbrv: str = ""
+    awayTeamLogoUrl: str = ""
+    homeTeamName: str = ""
+    homeScore: int = 0
+    homeTeamNameAbbrv: str = ""
+    homeTeamLogoUrl: str = ""
+    seriesTitle: str = ""
+    playoffRound: str = ""
+    tvStation: str = ""
+    homeTeamVenueName: str = ""
+    winningGoaliePlayerID: int = 0
+    goalieFirstName: str = ""
+    goalieLastName: str = ""
+    goalieHeadShotUrl: str = ""
+    winningGoalScorerPlayerID: int = 0
+    skaterFirstName: str = ""
+    skaterLastName: str = ""
+    skaterHeadShotUrl: str = ""
+    seriesInfo: str = ""
