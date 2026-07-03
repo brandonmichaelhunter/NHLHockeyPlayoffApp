@@ -7,7 +7,7 @@ from src.api.hockeyplayoffapi import main as main_module
 from fastapi.responses import HTMLResponse
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_json_without_hx_header():
 
@@ -37,7 +37,7 @@ async def test_nhl_scores_returns_json_without_hx_header():
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_template_with_hx_header():
 
@@ -82,7 +82,7 @@ async def test_nhl_scores_returns_template_with_hx_header():
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_read_nhl_scores_with_valid_date(httpx_mock: HTTPXMock):
     # Mock the database response for a valid date
@@ -123,7 +123,7 @@ async def test_read_nhl_scores_with_valid_date(httpx_mock: HTTPXMock):
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "invalid_date, expected_payload",
@@ -179,7 +179,7 @@ async def test_read_nhl_scores_with_invalid_date(invalid_date, expected_payload)
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_root():
     # Use ASGITransport to connect the client directly to the FastAPI app
@@ -192,7 +192,7 @@ async def test_root():
     assert response.json() == {"app_name": "Hockey Playoff API"}
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_health_live():
     async with AsyncClient(
@@ -204,7 +204,7 @@ async def test_health_live():
     assert response.json() == {"status": "alive"}
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_health_ready_db_connection():
     async with AsyncClient(
@@ -219,7 +219,7 @@ async def test_health_ready_db_connection():
 # Confirm the correct html templates are return test methods.
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_nhl_games_returns_index_html_template():
 
@@ -260,7 +260,7 @@ async def test_nhl_games_returns_index_html_template():
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_nhl_stats_returns_stats_html_template():
 
@@ -304,7 +304,7 @@ async def test_nhl_stats_returns_stats_html_template():
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_nhl_schedule_returns_schedule_html_template():
 
@@ -354,7 +354,7 @@ async def test_nhl_schedule_returns_schedule_html_template():
 # ------------------------------------------------
 # -- Confirm NHL Schedule endpoints return correct data.
 # ------------------------------------------------
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 @patch("src.api.hockeyplayoffapi.main.get_nhl_playoff_schedule_games")
 async def test_get_nhl_schedule_returns_valid_nhl_schedule(
@@ -430,9 +430,9 @@ async def test_get_nhl_schedule_returns_valid_nhl_schedule(
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
-@patch("src.api.hockeyplayoffapi.main.get_nhl_teams")
+@patch("src.api.hockeyplayoffapi.main.get_nhl_teams_data")
 async def test_get_nhl_teams_returns_valid_nhl_teams(mock_function):
 
     # Mock the nhl_scores fake data.
@@ -483,7 +483,7 @@ async def test_get_nhl_teams_returns_valid_nhl_teams(mock_function):
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 @patch("src.api.hockeyplayoffapi.main.get_nhl_goaltending_wins_leaders")
 @patch("src.api.hockeyplayoffapi.main.get_nhl_goaltending_gaa_leaders")
@@ -567,7 +567,7 @@ async def test_get_nhl_stats_returns_stats_leaders_template(
         main_module.app.dependency_overrides.clear()
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_get_playoff_game_dates_returns_json():
     fake_game_dates = [
@@ -723,12 +723,12 @@ def _schedule_row():
     }
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.parametrize(
     "func, kwargs, rows, expected_attr, expected_value, expected_params",
     [
         (
-            main_module.get_nhl_teams,
+            main_module.get_nhl_teams_data,
             {},
             [{"id": 1, "team_name": "Boston Bruins"}],
             "team_name",
@@ -827,11 +827,11 @@ def test_main_helpers_success(
         assert call_args[1] == expected_params
 
 
-@pytest.mark.unit
+@pytest.mark.api_unit
 @pytest.mark.parametrize(
     "func, kwargs",
     [
-        (main_module.get_nhl_teams, {}),
+        (main_module.get_nhl_teams_data, {}),
         (main_module.get_nhl_goal_leaders, {"TeamName": 7}),
         (main_module.get_nhl_plusminus_leaders, {"TeamName": 7}),
         (main_module.get_nhl_points_leaders, {"TeamName": 7}),

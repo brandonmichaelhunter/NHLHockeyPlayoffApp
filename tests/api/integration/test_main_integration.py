@@ -6,7 +6,7 @@ from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 from src.api.hockeyplayoffapi import main as main_module
 
 
-@pytest.mark.integration
+@pytest.mark.api_integration
 @pytest.mark.anyio
 async def test_health_live():
     async with AsyncClient(
@@ -18,7 +18,7 @@ async def test_health_live():
     assert response.json() == {"status": "alive"}
 
 
-@pytest.mark.integration
+@pytest.mark.api_integration
 @pytest.mark.anyio
 async def test_health_ready_db_connection():
     async with AsyncClient(
@@ -30,7 +30,7 @@ async def test_health_ready_db_connection():
     assert response.text == '"Database connection successful"'
 
 
-@pytest.mark.integration
+@pytest.mark.api_integration
 @pytest.mark.anyio
 async def test_read_nhl_scores_returns_html_with_hx_header_equal_false(tmp_path):
     # set db paht to test database.
@@ -82,7 +82,7 @@ async def test_read_nhl_scores_returns_html_with_hx_header_equal_false(tmp_path)
         main_module.engine = None
 
 
-@pytest.mark.integration
+@pytest.mark.api_integration
 @pytest.mark.anyio
 async def test_read_nhl_scores_integration_returns_html_for_hx(tmp_path):
     db_file = tmp_path / "test_scores_hx.db"  # set path to db file.
