@@ -53,13 +53,13 @@ jobs:
         
       - id: install-uv-dev-dependencies
         name: Install uv dev dependencies
-        if: ${{ inputs.cache_precommit }}
         run: |
+          uv sync --all-extras --dev
           #uv sync --locked
           #uv sync --dev
           #which uv
           #uv --version
-          uv sync --all-extras --dev
+          
           
 
       - id: run-pre-commit-checks
