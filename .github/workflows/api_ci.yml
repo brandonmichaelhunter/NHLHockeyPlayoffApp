@@ -170,9 +170,20 @@ jobs:
       #       exit 1
       #     fi
     
+    rebuild-caches:
+      name: Rebuild shared caches
+      uses: ./.github/workflows/reusable-rebuild-caches.yml
+      with:
+        cache_precommit: true
+        install_dev_deps: true
+        python-version: "3.13"
+      permissions:
+        contents: read
+
     # Runs unit tests
     api-unit-tests:
       name: Run API Unit Tests
+      needs: rebuild-caches
       runs-on: ubuntu-latest
       #needs: api-build-validation
       environment: NHLHockeyAppEnv
@@ -183,7 +194,7 @@ jobs:
       # packages: write
       steps:
        # This step checks out the PR's code when triggered by a workflow_run event from a PR.
-      # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
+       # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
         - uses: actions/checkout@v4
           if: github.event_name == 'workflow_run'
           with:
@@ -195,22 +206,20 @@ jobs:
         #- name: Checkout
           #uses: actions/checkout@v4
           
-        - name: Checkout repository code
-          uses: actions/checkout@v4
+        #- name: Checkout repository code
+        #  uses: actions/checkout@v4
           
-        - name: Set up Python
-          uses: actions/setup-python@v5
-          with:
-            python-version-file: "pyproject.toml"
+        #- name: Set up Python
+        #  uses: actions/setup-python@v5
+        #  with:
+        #    python-version-file: "pyproject.toml"
 
-        - name: Set up uv
-          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-          with:
-            version: "0.7.20"
+        #- name: Set up uv
+        #  uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        #  with:
+        #    version: "0.7.20"
 
-        - name: Run ls command
-          run: |
-                ls /home/runner/work
+        
         - name: Run API Unit Tests
           run: |
                 pytest -m 'api_unit' -v --cov=src/api --cov-report=xml:coverage-api-unit.xml
