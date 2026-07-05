@@ -217,46 +217,47 @@ jobs:
           if: always() # Runs even if tests fail to show what passed/failed
     
     # Runs integration tests against a deployed test environment to ensure the API is working correctly with all dependencies and infrastructure before merging into main.
-    # api-integration-tests:
-    #   name: Run API Integration Tests
-    #   runs-on: ubuntu-latest
-    #   needs: api-build-validation
-    #   environment: NHLHockeyAppEnv
+    api-integration-tests:
+       name: Run API Integration Tests
+       runs-on: ubuntu-latest
+       #needs: api-build-validation
+       environment: NHLHockeyAppEnv
 
-    #   permissions:
-    #       contents: read
-    #       pull-requests: write
-    #   # packages: write
-    #   steps:
-    #    # This step checks out the PR's code when triggered by a workflow_run event from a PR.
-    #   # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
-    #     - uses: actions/checkout@v4
-    #       if: github.event_name == 'workflow_run'
-    #       with:
-    #         ref: ${{ github.event.workflow_run.head_sha }}
+       permissions:
+           contents: read
+           pull-requests: write
+       # packages: write
+       steps:
+        # This step checks out the PR's code when triggered by a workflow_run event from a PR.
+       # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
+         #- uses: actions/checkout@v4
+         #  if: github.event_name == 'workflow_run'
+         #  with:
+         #    ref: ${{ github.event.workflow_run.head_sha }}
 
-    #     # This is the standard checkout for non-workflow_run triggers (push, pull_request).
-    #     - uses: actions/checkout@v4
-    #       if: github.event_name != 'workflow_run'
-    #     - name: Checkout
-    #       uses: actions/checkout@v4
-
-    #     - name: Set up Python
-    #       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-    #       with:
-    #         version-file: "./pyproject.toml"
+         # This is the standard checkout for non-workflow_run triggers (push, pull_request).
+         - name: Checkout
+           uses: actions/checkout@v4
+        
+         - name: Set up Python
+           uses: actions/setup-python@v5
+           with:
+             python-version: "3.13"
+        
+         - name: Install uv
+           uses: astral-sh/setup-uv@v8.2.0
             
-
-    #     - name: Run API Integration Tests
-    #       run: |
-    #             pytest -m 'api and integration' -v --cov=src/api --cov-report=xml:coverage-api-integration.xml
+         - name: Run API Unit Tests
+           run: |
+                uv sync --all-extras --dev
+                uv run pytest -m 'api_integration' -v --cov=src/api --cov-report=xml:coverage-api-integration.xml
             
     #     # OPTIONAL: Publish results visually inside GitHub
-    #     - name: Upload coverage to GitHub Job Summary
-    #       uses: py-cov-action/python-coverage-comment-action@v3
-    #       with:
-    #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #       if: always() # Runs even if tests fail to show what passed/failed
+         - name: Upload coverage to GitHub Job Summary
+           uses: py-cov-action/python-coverage-comment-action@v3
+           with:
+             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+             if: always() # Runs even if tests fail to show what passed/failed
     
     # # Runs pip-audit to check for vulnerable dependencies in the API code base and any security scanning tools configured in the project to catch potential security issues before merging into main.  
     # api-security-scanning:
