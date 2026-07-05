@@ -1,0 +1,33 @@
+name: "Setup uv with cached dependencies"
+description: "Install Python, uv, and restore cached project dependencies"
+
+inputs:
+  python-version:
+    description: "Python version to install"
+    required: false
+    default: "3.13"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v8.2.0
+    
+    - name: Restore uv cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/uv
+          ~/.local/share/uv
+        key: ${{ runner.os }}-uv-${{ inputs.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ inputs.python-version }}-
+    
+    - name: Sync dependencies
+      shell: bash
+      run: uv sync --all-extras --dev
