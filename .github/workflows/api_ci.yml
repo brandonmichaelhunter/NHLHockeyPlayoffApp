@@ -290,7 +290,7 @@ jobs:
         - name: Run API Security Scanning
           run: |
             uv sync --all-extras --dev
-            uv run poe security-scan
+            uv run poe security_scan
         # Run pip-audit to check for any vulnerable dependencies in the API code base.
         - name: Generate timestamp
           id: timestamp
