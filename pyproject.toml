@@ -129,8 +129,11 @@ lint = "ruff check ."
 
 [tool.poe.tasks]
 api_tests = "pytest -m 'api' -v"
-api_unittests = "pytest -m 'api_unit' -v"
-api_integration = "pytest -m 'api_integration' -v"
+api_unit_test = "pytest -m 'api_unit' -v"
+api_unit_cov = "pytest -m 'api_unit' -v --cov=src/api --cov-report=xml:coverage-api-unit.html"
+api_integration_test = "pytest -m 'api_integration' -v"
+api_integration_cov = "pytest -m 'api_integration' -v --cov=src/api --cov-report=xml:coverage-api-integration.html"
+api_test_cov = "pytest --cov=src/api --cov-report=xml:coverage-api-testing.html"
 etl_tests = "pytest -m 'etl' -v"
 etl_unittests = "pytest -m 'etl and unit' -v"
 etl_integration = "pytest -m 'etl and integration' -v"
