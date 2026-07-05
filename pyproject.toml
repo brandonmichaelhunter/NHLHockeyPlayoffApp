@@ -148,7 +148,7 @@ docker_run = "docker run -p 8000:8000 hockeyplayoff:latest"
 install_project = "uv sync --locked"
 precommit = "pre-commit run --all-files"
 audit = "uv run pip-audit --output pip-audit-report.md --format markdown"
-security_scan = pip-audit --output pip-audit-report.md --format markdown"
+security_scan = "pip-audit --output pip-audit-report.md --format markdown"
 testcovapi="pytest --cov=src/api"
 testcovetl="pytest --cov=src/data"
 [tool.pyrefly]
