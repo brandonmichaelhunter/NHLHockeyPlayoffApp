@@ -207,7 +207,7 @@ jobs:
         - name: Run API Unit Tests
           run: |
                 uv sync --all-extras --dev
-                pytest -m 'api_unit' -v --cov=src/api --cov-report=xml:coverage-api-unit.xml
+                uv run pytest -m 'api_unit' -v --cov=src/api --cov-report=xml:coverage-api-unit.xml
             
         # OPTIONAL: Publish results visually inside GitHub
         - name: Upload coverage to GitHub Job Summary
