@@ -266,7 +266,7 @@ jobs:
         - name: Download coverage artifact
           uses: actions/download-artifact@v4
           with:
-            name: api-coverage-report.html
+            name: api-coverage-report
             path: ./
         
         - name: Upload coverage to GitHub Job Summary
