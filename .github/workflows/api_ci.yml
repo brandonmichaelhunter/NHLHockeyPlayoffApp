@@ -267,10 +267,19 @@ jobs:
         
         - name: Upload Coverage Artifact
           uses: actions/upload-artifact@v4
+          id: artifact-upload
           with:
            name: api-coverage-report
            path: api-coverage-report.html
-        
+
+        - name: Comment PR with Artifact Link
+          uses: thollander/actions-comment-pull-request@v3
+          with:
+            message: |
+              📦 **API Coverage HTML Report is ready!**
+              Download and extract the zip file to view it locally:
+              👉 [Download Coverage Report](${{ steps.artifact-upload.outputs.artifact-url }})
+              
         - uses: actions/checkout@v4  
         - name: Download coverage artifact
           uses: actions/download-artifact@v4
@@ -278,12 +287,12 @@ jobs:
             name: api-coverage-report
             path: ./
 
-        - name: Post Coverage Comment to PR
-          uses: mshick/pytest-coverage-commenter@v1
-          with:
-            github-token: ${{ secrets.GITHUB_TOKEN }} 
-            pytest-html-coverage-path: ./api-coverage-report.html 
-            title: "API Coverage Report" 
+        #- name: Post Coverage Comment to PR
+        #  uses: mshick/pytest-coverage-commenter@v1
+        #  with:
+        #    github-token: ${{ secrets.GITHUB_TOKEN }} 
+        #    pytest-html-coverage-path: ./api-coverage-report.html 
+        #    title: "API Coverage Report" 
           
         #- name: Upload coverage to GitHub Job Summary
         #  uses: py-cov-action/python-coverage-comment-action@v3
