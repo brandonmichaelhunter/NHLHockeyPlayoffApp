@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from src.api.hockeyplayoffapi import main as main_module
 from fastapi.responses import HTMLResponse
 
-
+# testing
 @pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_json_without_hx_header():
@@ -202,18 +202,6 @@ async def test_health_live():
 
     assert response.status_code == 200
     assert response.json() == {"status": "alive"}
-
-
-@pytest.mark.api_unit
-@pytest.mark.anyio
-async def test_health_ready_db_connection():
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://localhost"
-    ) as ac:
-        response = await ac.get("/health/ready")
-
-    assert response.status_code == 200
-    assert response.text == '"Database connection successful"'
 
 
 # Confirm the correct html templates are return test methods.

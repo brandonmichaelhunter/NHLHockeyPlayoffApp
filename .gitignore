@@ -225,3 +225,10 @@ __marimo__/
 pip-audit-report.md
 pip-audit-report.md
 pip-audit-report.md
+coverage-api-integration.xml
+coverage-api-unit.xml
+coverage-api-unit.html
+coverage-api-unit.xml
+coverage-api-testing.xml
+coverage-api-testing.html
+validate-output.txt
