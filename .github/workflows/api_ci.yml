@@ -248,9 +248,11 @@ jobs:
       runs-on: ubuntu-latest
 
       permissions:
-        contents: read
+        contents: write
         pull-requests: write
-
+        packages: write
+        artifact-metadata: write
+        
       steps:
 
         - name: Setup uv with dependencies
