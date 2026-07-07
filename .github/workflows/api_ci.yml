@@ -277,11 +277,18 @@ jobs:
           with:
             name: api-coverage-report
             path: ./
-        
-        - name: Upload coverage to GitHub Job Summary
-          uses: py-cov-action/python-coverage-comment-action@v3
+
+        - name: Post Coverage Comment to PR
+          uses: mshick/pytest-coverage-commenter@v1
           with:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          if: always() # Runs even if tests fail to show what passed/failed
+            github-token: ${{ secrets.GITHUB_TOKEN }} 
+            pytest-html-coverage-path: ./api-coverage-report.html 
+            title: "API Coverage Report" 
+          
+        #- name: Upload coverage to GitHub Job Summary
+        #  uses: py-cov-action/python-coverage-comment-action@v3
+        #  with:
+        #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #  if: always() # Runs even if tests fail to show what passed/failed
 
     
