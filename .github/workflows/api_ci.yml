@@ -252,7 +252,9 @@ jobs:
         pull-requests: write
 
       steps:
-
+        - name: Checkout
+          uses: actions/checkout@v4
+           
         - name: Setup uv with dependencies
           uses: ./.github/actions/setup-uv-cache
           with:
