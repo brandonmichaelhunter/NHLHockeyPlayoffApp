@@ -261,13 +261,13 @@ jobs:
         - name: Run Converage Report Generation
           run: |
                 uv sync --all-extras --dev
-                uv run pytest --cov=src/api --cov-report=html:/reports/api-coverage-report.html
+                uv run pytest --cov=src/api --cov-report=html:api-coverage-report.html
         
         - name: Download coverage artifact
           uses: actions/download-artifact@v4
           with:
             name: api-coverage-report.html
-            path: ./reports/
+            path: ./
         
         - name: Upload coverage to GitHub Job Summary
           uses: py-cov-action/python-coverage-comment-action@v3
