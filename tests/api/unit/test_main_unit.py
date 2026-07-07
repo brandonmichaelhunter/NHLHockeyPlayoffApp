@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from src.api.hockeyplayoffapi import main as main_module
 from fastapi.responses import HTMLResponse
 
-
+# Update documentation.
 @pytest.mark.api_unit
 @pytest.mark.anyio
 async def test_nhl_scores_returns_json_without_hx_header():
