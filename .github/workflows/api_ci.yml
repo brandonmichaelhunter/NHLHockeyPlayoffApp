@@ -252,9 +252,15 @@ jobs:
         pull-requests: write
 
       steps:
-        
+
+        - name: Setup uv with dependencies
+          uses: ./.github/actions/setup-uv-cache
+          with:
+             python-version: "3.13"
+            
         - name: Run Converage Report Generation
           run: |
+                uv sync --all-extras --dev
                 uv run poe api_test_cov
         
         - name: Download coverage artifact
