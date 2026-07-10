@@ -24,7 +24,7 @@ permissions:
 jobs:
     # Ensures the API can be built successfully and basic infrastructure is working before running more expensive checks.
     api-build-validation:
-      name: API - Build Validation
+      name: API Build Validation
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
