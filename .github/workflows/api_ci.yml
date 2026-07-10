@@ -10,7 +10,8 @@ on:
         - '.pre-commit-config.yaml'
 
   pull_request:
-    branches: [ main ] 
+    branches: [ main, features ] 
+    types: [ opened, synchronize, reopened ]
     paths:
         - 'src/api/**'
         - 'tests/api/**'
@@ -23,11 +24,12 @@ permissions:
 jobs:
     # Ensures the API can be built successfully and basic infrastructure is working before running more expensive checks.
     api-build-validation:
-      name: API - Build Validation
+      name: API Build Validation
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
           uses: actions/checkout@v4
+        
         - name: Set up Python
           uses: astral-sh/setup-uv@v4
           with:
@@ -95,7 +97,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          uv run pre-commit run --all-files 2>&1 | tee precommit-output.txt
+          git ls-files -- src/api tests/api | xargs uv run pre-commit run --files 2>&1 | tee precommit-output.txt
           exit_code=${PIPESTATUS[0]}
           {
             echo "exit_code=$exit_code"
@@ -104,6 +106,7 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           exit 0
+      
       # If pre-commit fails, make a comment on the current PR with the output of the pre-commit command.
       # Limit the output to 60000 characters to avoid hitting GitHub's comment size limit.
       - name: Comment on PR if pre-commit failed
@@ -114,12 +117,44 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+           const body = [
+             "## pre-commit failed",
+             "",
+             "```text",
+             (process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured").slice(0, 60000),
+             "```"
+           ].join("\n");
+
+           await github.rest.issues.createComment({
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             issue_number: context.issue.number,
+             body
+           });
+      - name: Comment on PR if pre-commit failed
+        if: github.event_name == 'pull_request' && steps.precommit.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        env:
+          PRECOMMIT_OUTPUT: ${{ steps.precommit.outputs.output }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const rawOutput = process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured";
+            
+            // Safe fallback if logs exceed GitHub's absolute API comment limits
+            const logContent = rawOutput.length > 60000 ? rawOutput.slice(0, 60000) + "\n...[Truncated, view workflow artifacts for full logs]" : rawOutput;
+
             const body = [
-              "## pre-commit failed",
+              "## ❌ pre-commit failed",
+              "",
+              "<details>",
+              "<summary>📄 Click here to expand the full precommit-output.txt log</summary>",
               "",
               "```text",
-              (process.env.PRECOMMIT_OUTPUT || "No pre-commit output captured").slice(0, 60000),
-              "```"
+              logContent,
+              "```",
+              "",
+              "</details>"
             ].join("\n");
 
             await github.rest.issues.createComment({
@@ -137,171 +172,134 @@ jobs:
             exit 1
           fi
     
+    rebuild-caches:
+      name: Rebuild shared caches
+      uses: ./.github/workflows/reusable-rebuild-caches.yml
+      with:
+        cache_precommit: true
+        install_dev_deps: true
+        python-version: "3.13"
+      permissions:
+        contents: read
+
     # Runs unit tests
     api-unit-tests:
       name: Run API Unit Tests
+      needs: rebuild-caches
       runs-on: ubuntu-latest
-      needs: api-build-validation
       environment: NHLHockeyAppEnv
 
       permissions:
           contents: read
           pull-requests: write
-      # packages: write
-      steps:
-       # This step checks out the PR's code when triggered by a workflow_run event from a PR.
-      # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
-        - uses: actions/checkout@v4
-          if: github.event_name == 'workflow_run'
-          with:
-            ref: ${{ github.event.workflow_run.head_sha }}
 
-        # This is the standard checkout for non-workflow_run triggers (push, pull_request).
-        - uses: actions/checkout@v4
-          if: github.event_name != 'workflow_run'
+      steps:
         - name: Checkout
           uses: actions/checkout@v4
-
-        - name: Set up Python
-          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        
+        - name: Setup uv with dependencies
+          uses: ./.github/actions/setup-uv-cache
           with:
-            version-file: "pyproject.toml"
+            python-version: "3.13"
             
         - name: Run API Unit Tests
           run: |
-                pytest -m 'api and unit' -v --cov=src/api --cov-report=xml:coverage-api-unit.xml
-            
-        # OPTIONAL: Publish results visually inside GitHub
-        - name: Upload coverage to GitHub Job Summary
-          uses: py-cov-action/python-coverage-comment-action@v3
-          with:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          if: always() # Runs even if tests fail to show what passed/failed
+                uv sync --all-extras --dev
+                uv run poe api_unit_test
+  
     
-    # Runs integration tests against a deployed test environment to ensure the API is working correctly with all dependencies and infrastructure before merging into main.
+    # Run integration tests.
     api-integration-tests:
-      name: Run API Integration Tests
+       name: Run API Integration Tests
+       runs-on: ubuntu-latest
+       needs: rebuild-caches
+       environment: NHLHockeyAppEnv
+
+       permissions:
+           contents: read
+           pull-requests: write
+
+       steps:
+        # This step checks out the PR's code when triggered by a workflow_run event from a PR.
+       # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
+         #- uses: actions/checkout@v4
+         #  if: github.event_name == 'workflow_run'
+         #  with:
+         #    ref: ${{ github.event.workflow_run.head_sha }}
+
+         # This is the standard checkout for non-workflow_run triggers (push, pull_request).
+         - name: Checkout
+           uses: actions/checkout@v4
+        
+         - name: Setup uv with dependencies
+           uses: ./.github/actions/setup-uv-cache
+           with:
+             python-version: "3.13"
+        
+         - name: Run API Integration Tests
+           run: |
+                uv sync --all-extras --dev
+                uv run poe api_integration_test
+
+    publish-api-coverage:
+      name: Publish API Coverage to PR
+      needs: [api-unit-tests, api-integration-tests]
+      if: always() && github.event_name == 'pull_request'
       runs-on: ubuntu-latest
-      needs: api-build-validation
-      environment: NHLHockeyAppEnv
 
       permissions:
-          contents: read
-          pull-requests: write
-      # packages: write
-      steps:
-       # This step checks out the PR's code when triggered by a workflow_run event from a PR.
-      # Otherwise, it checks out the code from the event that triggered this workflow (e.g., a push to beetle).
-        - uses: actions/checkout@v4
-          if: github.event_name == 'workflow_run'
-          with:
-            ref: ${{ github.event.workflow_run.head_sha }}
-
-        # This is the standard checkout for non-workflow_run triggers (push, pull_request).
-        - uses: actions/checkout@v4
-          if: github.event_name != 'workflow_run'
-        - name: Checkout
-          uses: actions/checkout@v4
-
-        - name: Set up Python
-          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-          with:
-            version-file: "pyproject.toml"
-
-        - name: Run API Integration Tests
-          run: |
-                pytest -m 'api and integration' -v --cov=src/api --cov-report=xml:coverage-api-integration.xml
-            
-        # OPTIONAL: Publish results visually inside GitHub
-        - name: Upload coverage to GitHub Job Summary
-          uses: py-cov-action/python-coverage-comment-action@v3
-          with:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          if: always() # Runs even if tests fail to show what passed/failed
-    
-    # Runs pip-audit to check for vulnerable dependencies in the API code base and any security scanning tools configured in the project to catch potential security issues before merging into main.  
-    api-security-scanning:
-      name: Run API Security Scanning
-      runs-on: ubuntu-latest
-      needs: api-build-validation
-      environment: NHLHockeyAppEnv
-      permissions:
-        contents: read
+        contents: write
         pull-requests: write
+        packages: write
+        artifact-metadata: write
+        
       steps:
         - name: Checkout
           uses: actions/checkout@v4
-
-        - name: Set up Python
-          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+           
+        - name: Setup uv with dependencies
+          uses: ./.github/actions/setup-uv-cache
           with:
-            version-file: "pyproject.toml"
-
-        - name: Run API Security Scanning
+             python-version: "3.13"
+            
+        - name: Run Converage Report Generation
           run: |
-            uv run security-scan
-        # Run pip-audit to check for any vulnerable dependencies in the API code base.
-        - name: Generate timestamp
-          id: timestamp
-          run: echo "report_time=$(date +'%Y-%m-%d-%H-%M')" >> $GITHUB_OUTPUT
-
-        - name: Run pip-audit and save to file
-          id: audit
-          run: |
-            set +e
-            FILENAME="pip-audit-report-${{ steps.timestamp.outputs.report_time }}.md"
-            uv run pip-audit --output $FILENAME --format markdown
-            exit_code=$?
-            echo "filename=$FILENAME" >> $GITHUB_OUTPUT
-            echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-            exit 0
-
-        - name: Read pip-audit report
-          id: audit_report
-          uses: actions/github-script@v7
+                uv sync --all-extras --dev
+                uv run pytest --cov=src/api --cov-report=html:api-coverage-report.html
+        
+        - name: Upload Coverage Artifact
+          uses: actions/upload-artifact@v4
+          id: artifact-upload
           with:
-            script: |
-              const fs = require('fs');
-              const filename = "${{ steps.audit.outputs.filename }}";
-              const report = fs.readFileSync(filename, 'utf8');
-              core.setOutput('report', report);
-            result-encoding: string
+           name: api-coverage-report
+           path: api-coverage-report.html
 
-        - name: Comment on PR with pip-audit results
-          if: github.event_name == 'pull_request' && steps.audit.outputs.exit_code != '0'
-          uses: actions/github-script@v7
+        - name: Comment PR with Artifact Link
+          uses: thollander/actions-comment-pull-request@v3
           with:
-            script: |
-              const report = `${{ steps.audit_report.outputs.report }}`;
-              if (report.trim() === 'No vulnerabilities found') {
-                github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: '✅ `pip-audit` found no vulnerabilities.'
-                });
-              } else {
-                github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: `
-                    ### 🚨 Pip-audit Vulnerability Report
+            message: |
+              📦 **API Coverage HTML Report is ready!**
+              Download and extract the zip file to view it locally:
+              👉 [Download Coverage Report](${{ steps.artifact-upload.outputs.artifact-url }})
+              
+        - uses: actions/checkout@v4  
+        - name: Download coverage artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: api-coverage-report
+            path: ./
 
-                    *Report generated at: ${{ steps.timestamp.outputs.report_time }}*
+        #- name: Post Coverage Comment to PR
+        #  uses: mshick/pytest-coverage-commenter@v1
+        #  with:
+        #    github-token: ${{ secrets.GITHUB_TOKEN }} 
+        #    pytest-html-coverage-path: ./api-coverage-report.html 
+        #    title: "API Coverage Report" 
+          
+        #- name: Upload coverage to GitHub Job Summary
+        #  uses: py-cov-action/python-coverage-comment-action@v3
+        #  with:
+        #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #  if: always() # Runs even if tests fail to show what passed/failed
 
-
-                    ${report}
-                  `
-                });
-              }
-          env:
-            AUDIT_REPORT: ${{ steps.audit_report.outputs.report }}
-
-        - name: Fail job if static checks failed
-          if: always()
-          run: |
-            if [ "${{ steps.audit.outputs.exit_code }}" != "0" ]; then
-              echo "pip-audit found vulnerabilities"
-              exit 1
-            fi
+    

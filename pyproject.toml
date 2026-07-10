@@ -108,6 +108,8 @@ markers = [
      "unit: marks test as unit tests",
      "integration: marks test as integration tests",
      "api: marks test as API tests",
+     "api_unit: marks tests as API Unit tests",
+     "api_integration: marks tests as API Integration tests",
      "etl: marks test as ETL tests",
 ]
 
@@ -127,8 +129,11 @@ lint = "ruff check ."
 
 [tool.poe.tasks]
 api_tests = "pytest -m 'api' -v"
-api_unittests = "pytest -m 'api and unit' -v"
-api_integration = "pytest -m 'api and integration' -v"
+api_unit_test = "pytest -m 'api_unit' -v"
+api_unit_cov = "pytest -m 'api_unit' -v --cov=src/api --cov-report=html:api-coverage-report.html"
+api_integration_test = "pytest -m 'api_integration' -v"
+api_integration_cov = "pytest -m 'api_integration' -v --cov=src/api --cov-report=html:api-coverage-report.html"
+api_test_cov = "pytest --cov=src/api --cov-report=html:api-coverage-report.html"
 etl_tests = "pytest -m 'etl' -v"
 etl_unittests = "pytest -m 'etl and unit' -v"
 etl_integration = "pytest -m 'etl and integration' -v"
@@ -143,6 +148,7 @@ docker_run = "docker run -p 8000:8000 hockeyplayoff:latest"
 install_project = "uv sync --locked"
 precommit = "pre-commit run --all-files"
 audit = "uv run pip-audit --output pip-audit-report.md --format markdown"
+security_scan = "pip-audit --output pip-audit-report.md --format markdown"
 testcovapi="pytest --cov=src/api"
 testcovetl="pytest --cov=src/data"
 [tool.pyrefly]

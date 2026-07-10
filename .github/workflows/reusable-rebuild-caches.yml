@@ -35,7 +35,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: ${{ inputs.python-version }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.2.0
@@ -44,23 +44,25 @@ jobs:
         run: |
             which uv
             uv --version
+      
       - name: Install dependencies
         run: |
           uv sync --locked
-          uv sync --dev
-        
-      - id: install-dev-dependencies
-        if: ${{ inputs.cache_precommit }}
-        name: Install dev dependencies
-        run: |
-          uv sync --locked
-          which uv
-          uv --version
-          uv sync --all-extras --dev
           uv tool install poethepoet
           uv tool install pre-commit --with pre-commit-uv
+        
+      - id: install-uv-dev-dependencies
+        name: Install uv dev dependencies
+        run: |
+          uv sync --all-extras --dev
+          #uv sync --locked
+          #uv sync --dev
+          #which uv
+          #uv --version
+          
+          
 
-      - id: pre-commit
+      - id: run-pre-commit-checks
         if: ${{ inputs.cache_precommit }}
         name: Run pre-commit checks
         run: uv run pre-commit install-hooks

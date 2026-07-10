@@ -2,7 +2,7 @@
 - NHLHockeyPlayoffApp is a project that has two main functions:
   - An Python and FastAPI app that displays NHL Hockey Games, Stats and Schedule data.
   - An ETL that extracts NHL Hockey Games, Stats and Schedule data from an API into a Sqlite database.
-
+- Test
 # Install uv
  - What is uv?
    - Uv a Python package and project manager writen in Rust.
@@ -63,14 +63,10 @@
 - How to run pre-commit hooks:
   - ```uv run poe precommit``` to run all pre-commit hooks on all files
 
-# pip-audit
-- What is pip-audit?
-  - pip-audit is a tool that checks for known vulnerabilities in Python dependencies.
-  - It helps to ensure that the project is using secure and up-to-date dependencies.
-- How to install pip-audit:
-  - ```uv tool add pip-audit```
-- How to run pip-audit:
-  - ```uv run poe audit``` to run pip-audit on the project dependencies
+# Check for vulnerabilities natively.
+- ``uv audit`` to check for vulnerabilities in the project dependencies.
+- ``uv lock --upgrade `` to upgrade dependencies to the latest versions that fix vulnerabilities.
+- ``uv sync`` to update the lock file with the latest versions of dependencies.
 
 # Build Validation
 - What is build validation?
