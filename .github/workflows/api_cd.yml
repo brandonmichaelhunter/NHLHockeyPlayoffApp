@@ -15,7 +15,7 @@ on:
         - 'tests/api/**'
         - '.pre-commit-config.yaml'
 permissions:
-    contents: read
+    contents: write
     id-token: write
     pull-requests: write
 
@@ -126,7 +126,7 @@ jobs:
       #if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
       if: github.event.pull_request.merged == true
       permissions:
-        contents: read
+        contents: write
         pull-requests: write
         packages: write
         id-token: write
