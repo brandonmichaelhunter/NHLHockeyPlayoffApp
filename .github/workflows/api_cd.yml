@@ -137,28 +137,15 @@ jobs:
           with:
               ref: main #${{ github.event.pull_request.head.sha }}
               fetch-depth: 0 # Fetch full history to allow for accurate git commands if needed
-
+        
         - name: Setup uv with dependencies
           uses: ./.github/actions/setup-uv-cache
           with:
             python-version: "3.13"
-       
-        # #- name: Parse SemVer Level from PR Labels
-        #   id: semver_label
-        #   uses: rapidstack/pr-label-semver-action@v1.3.6
-        #   #with:
-            #default_bump: patch 
-           
-
-        - name: Set up uv
-          uses: astral-sh/setup-uv@v5
-          with:
-            enable-cache: true
-
-        - name: Set up Python
-          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-          with:
-            version-file: "pyproject.toml"
+            
+        - name: UV Sync Dev
+          run: |
+                uv sync --all-extras --dev
         
       # 2. Map the PR label to a SemVer bump strategy
         - name: Determine Bump Type
