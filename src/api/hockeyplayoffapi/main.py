@@ -20,7 +20,6 @@ from .models.nhl_stats import (
     nhl_points_leaders,
 )
 
-print(f"Running in Docker Test: {os.environ.get('DOCKER_ENV')}")
 if os.environ.get("DOCKER_ENV"):
     from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 else:
