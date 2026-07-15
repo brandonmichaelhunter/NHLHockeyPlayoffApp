@@ -18,7 +18,11 @@ permissions:
     contents: write
     id-token: write
     pull-requests: write
-
+env:
+  REGISTRY: ghcr.io
+  RESOURCE_GROUP: nhlplayoffapp_rg
+  CLUSTER_NAME: nhlplayoffapp_cluster
+  NAMESPACE: default
 jobs:
     
     rebuild-caches:
@@ -218,8 +222,35 @@ jobs:
               ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
               ghcr.io/${{ github.actor }}/nhlplayoffapp:latest
 
-        
-        
+        - name: Azure Login
+          uses: azure/login@v2
+          with:
+           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+        - name: Set AKS Context
+          uses: azure/aks-set-context@v4
+          with:
+           resource-group: ${{ env.RESOURCE_GROUP }}
+           cluster-name: ${{ env.CLUSTER_NAME }}
+        - name: Create GHCR Image Pull Secret
+          uses: azure/k8s-create-secret@v4
+          with:
+           namespace: ${{ env.NAMESPACE }}
+           secret-type: 'docker-registry'
+           secret-name: ghcr-secret
+           container-registry-url: ${{ env.REGISTRY }}
+           container-registry-username: ${{ github.actor }}
+           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+        - name: Deploy to AKS
+          uses: azure/k8s-deploy@v5
+          with:
+            namespace: ${{ env.NAMESPACE }}
+            manifests: |
+              k8s/deployment.yaml
+           images: |
+             ${{ env.REGISTRY }}/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
+           imagepullsecrets: |
+             ghcr-secret
           
         
         # - name: Set up Kubeconfig Context
