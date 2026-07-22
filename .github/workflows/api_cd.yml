@@ -1,6 +1,7 @@
 name: API - Continous Deployment
 
 on:
+  workflow_dispatch: # Enables the manual run button
   # push:
   #   branches: [ main ]
   #   paths:
