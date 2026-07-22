@@ -1,6 +1,7 @@
 name: API - Continous Deployment
 
 on:
+  workflow_dispatch: # Enables the manual run button
   # push:
   #   branches: [ main ]
   #   paths:
@@ -15,10 +16,14 @@ on:
         - 'tests/api/**'
         - '.pre-commit-config.yaml'
 permissions:
-    contents: read
+    contents: write
     id-token: write
     pull-requests: write
-
+env:
+  REGISTRY: ghcr.io
+  RESOURCE_GROUP: nhlplayoffapp_rg
+  CLUSTER_NAME: nhlplayoffapp_cluster
+  NAMESPACE: default
 jobs:
     
     rebuild-caches:
@@ -126,7 +131,7 @@ jobs:
       #if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
       if: github.event.pull_request.merged == true
       permissions:
-        contents: read
+        contents: write
         pull-requests: write
         packages: write
         id-token: write
@@ -137,28 +142,15 @@ jobs:
           with:
               ref: main #${{ github.event.pull_request.head.sha }}
               fetch-depth: 0 # Fetch full history to allow for accurate git commands if needed
-
+        
         - name: Setup uv with dependencies
           uses: ./.github/actions/setup-uv-cache
           with:
             python-version: "3.13"
-       
-        # #- name: Parse SemVer Level from PR Labels
-        #   id: semver_label
-        #   uses: rapidstack/pr-label-semver-action@v1.3.6
-        #   #with:
-            #default_bump: patch 
-           
-
-        - name: Set up uv
-          uses: astral-sh/setup-uv@v5
-          with:
-            enable-cache: true
-
-        - name: Set up Python
-          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-          with:
-            version-file: "pyproject.toml"
+            
+        - name: UV Sync Dev
+          run: |
+                uv sync --all-extras --dev
         
       # 2. Map the PR label to a SemVer bump strategy
         - name: Determine Bump Type
@@ -231,8 +223,37 @@ jobs:
               ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
               ghcr.io/${{ github.actor }}/nhlplayoffapp:latest
 
+        - name: Azure Login
+          uses: azure/login@v2
+          with:
+           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+        - name: Set AKS Context
+          uses: azure/aks-set-context@v4
+          with:
+           resource-group: ${{ env.RESOURCE_GROUP }}
+           cluster-name: ${{ env.CLUSTER_NAME }}
         
-        
+        - name: Create GHCR Image Pull Secret
+          uses: azure/k8s-create-secret@v4
+          with:
+           namespace: ${{ env.NAMESPACE }}
+           secret-type: 'docker-registry'
+           secret-name: 'ghcr-secret'
+           container-registry-url: ${{ env.REGISTRY }}
+           container-registry-username: ${{ github.actor }}
+           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+           
+        - name: Deploy to AKS
+          uses: azure/k8s-deploy@v5
+          with:
+            namespace: ${{ env.NAMESPACE }}
+            manifests: |
+              k8s/deployment.yaml
+           images: |
+             ${{ env.REGISTRY }}/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
+           imagepullsecrets: |
+             ghcr-secret
           
         
         # - name: Set up Kubeconfig Context
