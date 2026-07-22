@@ -250,9 +250,9 @@ jobs:
             namespace: ${{ env.NAMESPACE }}
             manifests: |
               k8s/deployment.yaml
-           images: |
+            images: |
              ${{ env.REGISTRY }}/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
-           imagepullsecrets: |
+            imagepullsecrets: |
              ghcr-secret
           
         
