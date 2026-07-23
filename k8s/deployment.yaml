@@ -17,5 +17,13 @@ spec:
         image: ghcr.io/brandonmichaelhunter/nhlplayoffapp:latest
         ports:
         - containerPort: 80
+        # ADD THIS BLOCK TO FIX THE "INSUFFICIENT CPU" ERROR
+        resources:
+          requests:
+            cpu: "50m"      # Only asks for 5% of a single CPU core per pod
+            memory: "64Mi"  # Asks for 64MB of RAM
+          limits:
+            cpu: "200m"     # Allows the pod to burst to 20% CPU if needed
+            memory: "128Mi" # Hard ceiling for memory
       imagePullSecrets:
       - name: ghcr-secret
