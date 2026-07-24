@@ -9,17 +9,17 @@ on:
         - 'tests/api/**'
         - '.pre-commit-config.yaml'
 
-  pull_request:
-    branches: [ main, features ] 
-    types: [ opened, synchronize, reopened ]
-    paths:
-        - 'src/api/**'
-        - 'tests/api/**'
-        - '.pre-commit-config.yaml'
+  #pull_request:
+  #  branches: [ main, features ] 
+  #  types: [ opened, synchronize, reopened ]
+  #  paths:
+  #      - 'src/api/**'
+  #      - 'tests/api/**'
+  #      - '.pre-commit-config.yaml'
   
 permissions:
     contents: read
-    pull-requests: write
+#    pull-requests: write
 
 jobs:
     # Ensures the API can be built successfully and basic infrastructure is working before running more expensive checks.
