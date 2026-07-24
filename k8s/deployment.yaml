@@ -15,8 +15,28 @@ spec:
       containers:
       - name: nhlplayoffapp-container
         image: ghcr.io/brandonmichaelhunter/nhlplayoffapp:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
+        # --- HEALTH PROBES START HERE ---
+        livenessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+          
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 2
+        # --- HEALTH PROBES END HERE ---
         # ADD THIS BLOCK TO FIX THE "INSUFFICIENT CPU" ERROR
         resources:
           requests:
