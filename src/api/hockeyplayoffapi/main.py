@@ -27,6 +27,9 @@ else:
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_BASE_DIR = Path(__file__).resolve().parent
+# Create data directory if it doesn't exist
+DB_DIR = os.path.join(BASE_DIR, "./data")
+os.makedirs(DB_DIR, exist_ok=True)
 
 DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, './data/hockeyplayoff.db')}"
 engine = create_engine(DATABASE_URL, echo=True)
@@ -45,7 +48,13 @@ templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
 
 @app.on_event("startup")
 def on_startup():
-    SQLModel.metadata.create_all(engine)
+    print("Initializing database...", flush=True)
+    try:
+        SQLModel.metadata.create_all(engine)
+        print("Database initialization complete", flush=True)
+    except Exception as e:
+        print(f"CRITICAL: Database initialization failed: {e}", flush=True)
+        raise
 
 
 @app.get("/health")
