@@ -19,12 +19,12 @@ spec:
          image: ghcr.io/brandonmichaelhunter/nhlplayoffapp:latest
          imagePullPolicy: Always
          ports:
-          - containerPort: 80
+          - containerPort: 8000
          # --- HEALTH PROBES START HERE ---
          livenessProbe:
            httpGet:
-             path: /index.html
-             port: 80
+              path: /health
+              port: 8000
            initialDelaySeconds: 15
            periodSeconds: 10
            timeoutSeconds: 2
@@ -32,8 +32,8 @@ spec:
           
          readinessProbe:
            httpGet:
-             path: /index.html
-             port: 80
+              path: /health/ready
+              port: 8000
            initialDelaySeconds: 5
            periodSeconds: 5
            timeoutSeconds: 2
