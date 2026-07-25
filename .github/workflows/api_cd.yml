@@ -220,6 +220,7 @@ jobs:
             context: .
             file: ./src/Dockerfile
             push: true
+            platforms: linux/amd64,linux/arm64
             tags: |
               ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
               ghcr.io/${{ github.actor }}/nhlplayoffapp:latest
