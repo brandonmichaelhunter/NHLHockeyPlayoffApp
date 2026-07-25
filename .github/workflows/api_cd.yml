@@ -203,7 +203,7 @@ jobs:
           uses: docker/login-action@v3
           with:
             registry: ghcr.io
-            username: ${{ github.actor }}
+            username: ${{ github.repository_owner }}
             password: ${{ secrets.GITHUB_TOKEN }}
 
         # 8. Build and Push synchronized Docker image
@@ -211,7 +211,7 @@ jobs:
           id: meta
           uses: docker/metadata-action@v5
           with:
-           images: ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
+           images: ghcr.io/${{ github.repository_owner }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
 
         - name: Build and Push
           if: steps.determine_bump.outputs.bump != 'false'
@@ -222,8 +222,8 @@ jobs:
             push: true
             platforms: linux/amd64,linux/arm64
             tags: |
-              ghcr.io/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
-              ghcr.io/${{ github.actor }}/nhlplayoffapp:latest
+              ghcr.io/${{ github.repository_owner }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
+              ghcr.io/${{ github.repository_owner }}/nhlplayoffapp:latest
 
         - name: Azure Login
           uses: azure/login@v2
@@ -243,7 +243,7 @@ jobs:
            secret-type: 'docker-registry'
            secret-name: 'ghcr-secret'
            container-registry-url: ${{ env.REGISTRY }}
-           container-registry-username: ${{ github.actor }}
+           container-registry-username: ${{ github.repository_owner }}
            container-registry-password: ${{ secrets.GHCR_PAT }}
            
         - name: Deploy to AKS
@@ -253,7 +253,7 @@ jobs:
             manifests: |
               k8s/deployment.yaml
             images: |
-             ${{ env.REGISTRY }}/${{ github.actor }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
+             ${{ env.REGISTRY }}/${{ github.repository_owner }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
             imagepullsecrets: |
              ghcr-secret
           
