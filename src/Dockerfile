@@ -21,9 +21,11 @@ RUN uv sync --locked
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-
+# Add this before the ENTRYPOINT
+RUN mkdir -p /api/hockeyplayoffapi/data
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
 EXPOSE 8000
-CMD ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "--port", "8000", "./hockeyplayoffapi/main.py"]
+CMD ["uv", "run", "python", "-m", "uvicorn", "hockeyplayoffapi.main:app", "--host", "0.0.0.0", "--port", "8000"]
+#CMD ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "--port", "8000", "./hockeyplayoffapi/main.py"]
