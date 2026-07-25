@@ -25,19 +25,19 @@ spec:
            httpGet:
               path: /health
               port: 8000
-           initialDelaySeconds: 15
+           initialDelaySeconds: 20
            periodSeconds: 10
-           timeoutSeconds: 2
+           timeoutSeconds: 5
            failureThreshold: 3
           
          readinessProbe:
            httpGet:
               path: /health/ready
               port: 8000
-           initialDelaySeconds: 5
-           periodSeconds: 5
-           timeoutSeconds: 2
-           failureThreshold: 2
+           initialDelaySeconds: 20
+           periodSeconds: 10
+           timeoutSeconds: 5
+           failureThreshold: 3
          # --- HEALTH PROBES END HERE ---
          # ADD THIS BLOCK TO FIX THE "INSUFFICIENT CPU" ERROR
          resources:
