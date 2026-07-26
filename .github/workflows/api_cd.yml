@@ -257,7 +257,14 @@ jobs:
             imagepullsecrets: |
              ghcr-secret
           
+        - name: Wait for rollout (explicit) 
+          run: | 
+              kubectl rollout status deployment/nhlplayoffapp-deployment --namespace default --timeout=15m
         
+        - name: Dump deployment diagnostics on failure 
+          if: failure() 
+          run: | 
+              echo "=== Deployment describe ===" kubectl describe deployment nhlplayoffapp-deployment -n default || true echo "=== ReplicaSets ===" kubectl get rs -n default -o wide || true echo "=== Pods ===" kubectl get pods -n default -o wide || true echo "=== Pod details & logs ===" for p in $(kubectl get pods -n default -l app=nhlplayoffapp -o name); do echo "----- $p -----" kubectl describe -n default $p || true kubectl logs -n default $p --all-containers --timestamps || true kubectl logs -n default $p --previous --all-containers --timestamps || true done echo "=== Events ===" kubectl get events -n default --sort-by='.lastTimestamp' | tail -n 50 || true
         # - name: Set up Kubeconfig Context
         #   uses: azure/k8s-set-context@v3
         #   with:
