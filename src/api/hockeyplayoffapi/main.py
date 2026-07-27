@@ -20,10 +20,11 @@ from .models.nhl_stats import (
     nhl_points_leaders,
 )
 
-if os.environ.get("DOCKER_ENV"):
-    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
-else:
-    from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+# if os.environ.get("DOCKER_ENV"):
+# from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+from .models.nhl_scores import nhl_scores
+# else:
+#    from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_BASE_DIR = Path(__file__).resolve().parent
