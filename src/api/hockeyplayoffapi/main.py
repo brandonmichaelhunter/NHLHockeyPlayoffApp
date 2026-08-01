@@ -3,6 +3,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Header
 from sqlmodel import Session, SQLModel, create_engine, select, text
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
@@ -43,6 +44,12 @@ def get_session():
 
 SessionDep = Annotated[Session, Depends(get_session)]
 app = FastAPI()
+
+app.mount(
+    "/static",
+    StaticFiles(directory=str(Path(TEMPLATE_BASE_DIR, "templates"))),
+    name="static",
+)
 
 templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
 
