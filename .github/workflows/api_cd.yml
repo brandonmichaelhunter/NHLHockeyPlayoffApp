@@ -252,6 +252,7 @@ jobs:
             namespace: ${{ env.NAMESPACE }}
             manifests: |
               k8s/deployment.yaml
+              k8s/service.yaml
             images: |
              ${{ env.REGISTRY }}/${{ github.repository_owner }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
             imagepullsecrets: |
