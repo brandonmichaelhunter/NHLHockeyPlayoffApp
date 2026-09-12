@@ -1,7 +1,7 @@
 from sqlmodel import Field, SQLModel
 
 
-class nhl_scores(SQLModel, table=True):
+class nhl_scores(SQLModel, table=False):
     id: int | None = Field(default=None, primary_key=True)
     date: str = Field(index=True)
     home_team: str
