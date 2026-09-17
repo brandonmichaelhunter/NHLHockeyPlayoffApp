@@ -344,6 +344,9 @@ uv run poe audit
 uv run validate
 ```
 
+# Setup for Azure deployment using GitHub Actions
+- Run the script `scripts/create-azure-service-principal.sh` to create a service principal for GitHub Actions to deploy to Azure.
+- Save the Secret in GitHub
 ---
 
 ## Notes
