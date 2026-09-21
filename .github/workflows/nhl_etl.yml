@@ -1,0 +1,41 @@
+name: Scheduled - ETL Job
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every single day (Adjust to your needs)
+    - cron: '0 0 * * *'
+  # Allows you to also trigger the job manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  rebuild-caches:
+      name: Rebuild shared caches
+      uses: ./.github/workflows/reusable-rebuild-caches.yml
+      with:
+        cache_precommit: true
+        install_dev_deps: true
+        python-version: "3.13"
+      permissions:
+        contents: read
+
+  run-cron-task:
+    name: Run Scheduled ETL Task
+    needs: rebuild-caches
+    runs-on: ubuntu-latest
+    environment: NHLHockeyAppEnv
+    permissions:
+          contents: read
+          pull-requests: write
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        
+        - name: Setup uv with dependencies
+          uses: ./.github/actions/setup-uv-cache
+          with:
+            python-version: "3.13"
+            
+        - name: Run ETL Task
+          run: |
+                uv sync --all-extras --dev
+                uv run poe run_etl

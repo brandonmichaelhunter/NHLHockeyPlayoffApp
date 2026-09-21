@@ -1,78 +1,357 @@
 # NHLHockeyPlayoffApp
-- NHLHockeyPlayoffApp is a project that has two main functions:
-  - An Python and FastAPI app that displays NHL Hockey Games, Stats and Schedule data.
-  - An ETL that extracts NHL Hockey Games, Stats and Schedule data from an API into a Sqlite database.
-- Test
-# Install uv
- - What is uv?
-   - Uv a Python package and project manager writen in Rust.
-   - This tool replaces pip, pipx, poetry, and virtualenv with a single tool.
- - Install uv:
-   - ```curl -LsSf https://uv.eustace.io/install.sh | sh```
- - Verify installation: ```uv --version```
- - Tools
-   - What are tools?
-     - Tools are Python pakcages that provide command-line interfaces.
-     - Here are a list of tools we need to install for this project:
-        fasttyper, pyupgrade, ruff, tox
-      - Install tools: ```uv tool add fasttyper pyupgrade ruff tox```
-- Verify tools installation: ```uv tool list```
-- Packages to install
-  - uv add fastapi --extra standard
-  - uv add sqlmodel
 
-# How to run API and ETL apps locally
-## Activate the virtual environment:
-  - ```source .venv/Scripts/activate```
-## How to run FastAPI app locally:
-  - Activate the virtual environment: ```source .venv/Scripts/activate```
-  - ```cd NHLHockeyPlayoffApp``` to get to the root of the project
-  - ```uv run poe run_api``` to run the app locally
-## How to run the ETL locally:
-  - Activate the virtual environment: ```source .venv/Scripts/activate```
-  - ```cd NHLHockeyPlayoffApp``` to get to the root of the project
-  - ```uv run poe run_etl``` to run the ETL locally
+NHLHockeyPlayoffApp is a Python-based application that combines:
 
-# Testing
-- How to run tests:
-  - ```cd NHLHockeyPlayoffApp ``` to get to the root of the project
-  - ```uv run poe unit_test``` to run unit tests
-  - ```uv run poe integration_test``` to run integration tests
+- a FastAPI web application for NHL playoff scores, schedules, teams, and stats
+- an ETL pipeline that pulls NHL data from public NHL APIs into a local SQLite database
 
-# Linting
- - How to run linter
-   - ```uv run poe lint ```
+The project is organized around two main workflows:
 
-# Runing the app locally
-- ```cd NHLHockeyPlayoffApp ``` to get to the root of the project
-- ```uv run poe run_app``` to run the app locally
+1. API application: serves data through FastAPI routes and Jinja templates
+2. ETL application: extracts, transforms, and loads NHL data into the database used by the API
 
-# Docker
-- How to build a dockerfile locally
-  - ``` cd NHLHockeyPlayoffApp ``` to get to the root of the project
-  - ```uv run poe docker_build ``` to build the docker image locally
-- How to run a docker container locally
-  - ```uv run poe docker_run ``` to run the docker container locally
+---
 
-# Pre-commit
-- What is pre-commit?
-  - Pre-commit is a framework for managing and maintaining multi-language pre-commit hooks.
-  - It helps to ensure that code is formatted, linted, and tested before it is committed to the repository.
-- How to install pre-commit:
-  - ```uv tool add pre-commit```
-- How to run pre-commit hooks:
-  - ```uv run poe precommit``` to run all pre-commit hooks on all files
+## Tech stack
 
-# Check for vulnerabilities natively.
-- ``uv audit`` to check for vulnerabilities in the project dependencies.
-- ``uv lock --upgrade `` to upgrade dependencies to the latest versions that fix vulnerabilities.
-- ``uv sync`` to update the lock file with the latest versions of dependencies.
+- Python 3.13+
+- FastAPI + Uvicorn
+- SQLModel + SQLAlchemy
+- SQLite
+- Jinja2 templates
+- Docker
+- pytest for testing
+- Ruff for linting
+- pre-commit for automated checks
+- pip-audit for vulnerability scanning
+- uv for dependency and environment management
 
-# Build Validation
-- What is build validation?
-  - Build validation is the process of ensuring that the project can be built and run successfully.
-  - It helps to catch any issues with the code or dependencies before they are deployed.
-- Purpose:
-  - Ensures entire API infrastructure is working correctly and can be built and run successfully.
-- How to run build validation:
-  - ```uv run validate``` to run build validation on the project
+---
+
+## Project dependencies
+
+The project dependencies are defined in [pyproject.toml](pyproject.toml).
+
+### Core runtime dependencies
+
+- fastapi
+- uvicorn
+- sqlmodel
+- sqlalchemy
+- pydantic
+- httpx
+- requests
+- python-dotenv
+- jinja2
+- python-multipart
+- psycopg[binary]
+- asyncpg
+
+### Development and validation dependencies
+
+- pytest
+- pytest-asyncio
+- pytest-cov
+- pytest-httpx
+- pytest-mock
+- ruff
+- pre-commit
+- pip-audit
+- pyrefly
+- poethepoet
+
+---
+
+## Install uv
+
+This project uses uv as the package and environment manager.
+
+Install uv:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Verify it is installed:
+
+```bash
+uv --version
+```
+
+---
+
+## Install project dependencies
+
+From the repository root:
+
+```bash
+uv sync
+```
+
+This creates the project virtual environment and installs the dependencies from the lock file.
+
+If you want to install the development dependencies explicitly:
+
+```bash
+uv sync --group dev
+```
+
+---
+
+## Activate the virtual environment
+
+On macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+On Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Once activated, your shell will use the project Python environment.
+
+---
+
+## Run the API app
+
+From the repository root:
+
+```bash
+uv run poe run_api
+```
+
+This starts the FastAPI app in development mode with reload enabled.
+
+The app is typically served on:
+
+```text
+http://127.0.0.1:8000
+```
+
+You can also run it manually with uvicorn:
+
+```bash
+uv run uvicorn src.api.hockeyplayoffapi.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+---
+
+## Run the ETL app
+
+From the repository root:
+
+```bash
+uv run poe run_etl
+```
+
+This runs the ETL entry point in [src/data/hockeyplayoffetl/etl.py](src/data/hockeyplayoffetl/etl.py).
+
+---
+
+## Run tests
+
+The project defines pytest markers in [pyproject.toml](pyproject.toml), including:
+
+- api_unit
+- api_integration
+- unit
+- integration
+
+### API unit tests
+
+```bash
+uv run poe api_unit_test
+```
+
+Or directly:
+
+```bash
+pytest -m "api_unit" -v
+```
+
+### API integration tests
+
+```bash
+uv run poe api_integration_test
+```
+
+Or directly:
+
+```bash
+pytest -m "api_integration" -v
+```
+
+### Full API test suite
+
+```bash
+uv run poe api_tests
+```
+
+---
+
+## Run the linter
+
+This project uses Ruff.
+
+```bash
+uv run poe lint
+```
+
+Or directly:
+
+```bash
+ruff check .
+```
+
+---
+
+## Run the API app in Docker
+
+Build the Docker image:
+
+```bash
+docker build -f "src/Dockerfile" -t hockeyplayoff:latest .
+```
+
+Run the container:
+
+```bash
+docker run -p 8000:8000 hockeyplayoff:latest
+```
+
+The app should be reachable on:
+
+```text
+http://localhost:8000
+```
+
+The Dockerfile for the API is in [src/Dockerfile](src/Dockerfile).
+
+---
+
+## What is pre-commit?
+
+Pre-commit is a tool that runs configured hooks before you commit code. It helps catch formatting, lint, and basic validation issues early.
+
+This project includes a [./.pre-commit-config.yaml](.pre-commit-config.yaml) file and the command is already configured in [pyproject.toml](pyproject.toml).
+
+### Install pre-commit
+
+```bash
+uv tool install pre-commit --with pre-commit-uv
+```
+
+### Run pre-commit manually
+
+```bash
+uv run poe precommit
+```
+
+Or directly:
+
+```bash
+pre-commit run --all-files
+```
+
+---
+
+## Check for vulnerabilities natively
+
+This project is set up to use pip-audit for dependency vulnerability checks.
+
+Run the audit task:
+
+```bash
+uv run poe audit
+```
+
+Or run directly:
+
+```bash
+uv run pip-audit --output pip-audit-report.md --format markdown
+```
+
+This generates a report file named [pip-audit-report.md](pip-audit-report.md).
+
+---
+
+## What is build validation?
+
+Build validation is a lightweight sanity check that confirms the application can start and that the most important health endpoint responds correctly.
+
+In this project, build validation is implemented in [build_validation.py](build_validation.py). It imports the FastAPI app and requests the `/health` endpoint. If the response is not successful, the script exits with an error.
+
+### Run build validation
+
+```bash
+uv run validate
+```
+
+This executes the `validate_app_build` function defined in [build_validation.py](build_validation.py).
+
+---
+
+## Contribution guidelines
+
+Contributions are welcome.
+
+### Recommended workflow
+
+1. Clone the repository
+2. Create a feature branch
+3. Activate the virtual environment
+4. Install dependencies with `uv sync`
+5. Make your changes
+6. Run the relevant tests
+7. Run the linter
+8. Run pre-commit
+9. Open a pull request
+
+### Typical local validation before opening a PR
+
+```bash
+source .venv/bin/activate
+uv sync
+uv run poe api_unit_test
+uv run poe lint
+uv run poe precommit
+```
+
+If you are preparing a change that affects the API runtime, also run:
+
+```bash
+uv run validate
+```
+
+---
+
+## Useful commands summary
+
+```bash
+uv sync
+source .venv/bin/activate
+uv run poe run_api
+uv run poe run_etl
+uv run poe api_unit_test
+uv run poe api_integration_test
+uv run poe lint
+uv run poe precommit
+uv run poe audit
+uv run validate
+```
+
+# Setup for Azure deployment using GitHub Actions
+- Run the script `scripts/create-azure-service-principal.sh` to create a service principal for GitHub Actions to deploy to Azure.
+- Save the Secret in GitHub
+---
+
+## Notes
+
+- The app data layer relies on SQLite for local development and demo usage.
+- The ETL pipeline extracts NHL data from public API endpoints and loads it into the local database used by the API.
+- The project is currently configured for local development workflows and Docker-based deployment.
+
