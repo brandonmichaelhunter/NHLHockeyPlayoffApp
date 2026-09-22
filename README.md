@@ -344,9 +344,15 @@ uv run poe audit
 uv run validate
 ```
 
-# Setup for Azure deployment using GitHub Actions
-- Run the script `scripts/create-azure-service-principal.sh` to create a service principal for GitHub Actions to deploy to Azure.
-- Save the Secret in GitHub
+# Create Azure service principal for GitHub Actions and grant it Contributor access to the resource group
+- Run the script `bash scripts/create-azure-service-principal.sh` to create a service principal for GitHub Actions to deploy to Azure and grant it Contributor access to the resource group.
+- Save the Secret in GitHub Actions as `AZURE_CREDENTIALS` with the output of the script.
+- Note: You will need to replace the placeholder in the script with your actual resource group name.
+
+# Grant AKS access to the service principal
+- Run the script `bash scripts/grant-aks-access-to-sp.sh` to grant the service principal access to the AKS cluster.
+- Note: You will need to replace the placeholders in the script with your actual subscription ID, resource group name, and cluster name.
+
 ---
 
 ## Notes
