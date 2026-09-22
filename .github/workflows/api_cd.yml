@@ -21,8 +21,8 @@ permissions:
     pull-requests: write
 env:
   REGISTRY: ghcr.io
-  RESOURCE_GROUP: nhlapp_rg
-  CLUSTER_NAME: nhlplayoff-azure-useast-dev-01
+  RESOURCE_GROUP: nhl_app_rg
+  CLUSTER_NAME: nhlapp-prod-eastus-01
   NAMESPACE: default
 jobs:
     

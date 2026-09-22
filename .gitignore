@@ -235,3 +235,6 @@ validate-output.txt
 .env.test
 .env.production
 .env.development
+infra/terraform/terraform.tfvars
+infra/terraform/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.80.0/darwin_amd64/terraform-provider-azurerm_v4.80.0_x5
+infra/terraform/.terraform.lock.hcl
