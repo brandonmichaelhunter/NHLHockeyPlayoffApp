@@ -5,6 +5,8 @@ from unittest.mock import MagicMock, patch
 from fastapi.responses import HTMLResponse
 from src.api.hockeyplayoffapi import main as main_module
 
+""" Unit tests for the main API endpoints """
+
 
 @pytest.mark.api_unit
 @pytest.mark.anyio
