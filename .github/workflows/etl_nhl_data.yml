@@ -1,0 +1,20 @@
+name: Run NHL ETL Job
+
+on:
+  schedule:
+    # Runs every minute
+    - cron: '1 * * * *'
+  # Allows to run workflow manually.  
+  workflow_dispatch: 
+
+jobs:
+  cron-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository code
+        uses: actions/checkout@v4
+
+      - name: Run your script
+        run: |
+          echo "Starting the cron job..."
+          
