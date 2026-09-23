@@ -23,6 +23,9 @@ jobs:
     needs: rebuild-caches
     runs-on: ubuntu-latest
     environment: NHLHockeyAppEnv
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
     permissions:
           contents: read
           pull-requests: write
