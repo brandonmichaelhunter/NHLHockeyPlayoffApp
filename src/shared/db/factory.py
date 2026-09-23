@@ -24,7 +24,9 @@ def get_engine(database_url: Optional[str] = None, **engine_kwargs):
     the repo (useful for local API runs).
     """
     database_url = database_url or os.getenv("DATABASE_URL")
+    print(f"Using database URL: {database_url}")
     if not database_url:
+        print("Warning: DATABASE_URL not set, defaulting to local SQLite database.")
         repo_root = os.path.abspath(os.getcwd())
         default = (
             f"sqlite:///{os.path.join(repo_root, 'src', 'data', 'hockeyplayoff.db')}"
