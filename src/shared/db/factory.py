@@ -23,7 +23,8 @@ def get_engine(database_url: Optional[str] = None, **engine_kwargs):
     environment. If that is not set, default to a file-based SQLite inside
     the repo (useful for local API runs).
     """
-    database_url = database_url or os.getenv("DATABASE_URL")
+    database_url = (database_url or os.getenv("DATABASE_URL") or "").strip()
+    database_url = database_url.strip('"').strip("'")
     print(f"Using database URL: {database_url}")
     if not database_url:
         print("Warning: DATABASE_URL not set, defaulting to local SQLite database.")
