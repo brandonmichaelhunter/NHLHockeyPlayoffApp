@@ -185,8 +185,8 @@ class nhl_etl_manager:
                 id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                 team_id INTEGER,
                 player_id INTEGER,
-                start_date TIMESTAMP WITH TIME ZONE,
-                end_date TIMESTAMP WITH TIME ZONE,
+                start_date TEXT,
+                end_date TEXT,
                 jersey_number INTEGER,
                 position TEXT
             );
@@ -527,7 +527,7 @@ class nhl_etl_manager:
 
             # transform json data into list of models
             models = self.transform_teams_info(jsonData, jsonTeamsFranchiseData)
-
+            print(models)
             # save model data to database
             self.load_teams_info(models)
 
@@ -542,6 +542,7 @@ class nhl_etl_manager:
             extracted_data = self._apiClient.fetch_nhl_data_with_url(
                 "https://api.nhle.com/stats/rest/en/team"
             )
+
             return extracted_data
         except Exception as e:
             self._log.error(
@@ -565,15 +566,11 @@ class nhl_etl_manager:
 
     def transform_teams_info(self, teamData: list, franchiseData: list) -> list:
         try:
-            playoff_teams = self._dbManager.execute_fetch(
-                "SELECT team_name FROM nhl_teams;"
-            )
             playoff_francise_teams = []
-            for playoff_team in playoff_teams:
-                for item in franchiseData["data"]:
-                    franchise_id = item["id"]
-                    if item["teamCommonName"] == playoff_team[0]:
-                        playoff_francise_teams.append(item)
+            # for playoff_team in playoff_teams:
+            for item in franchiseData["data"]:
+                franchise_id = item["id"]
+                playoff_francise_teams.append(item)
 
             transformed_data = []
             for playoff_franchise_team in playoff_francise_teams:
@@ -648,13 +645,19 @@ class nhl_etl_manager:
             teamsInfo: list = self._dbManager.execute_fetch(
                 "SELECT abbrv, id FROM teams;"
             )  # get list of team abbreviations from teams table.
+
             teamsRosters: list = []
+
             for team in teamsInfo:
-                json_TeamRoster: list = self.extract_team_roster_info(team[0])
-                teamRosterData = DynamicObject(
-                    abbrv=team[0], id=team[1], roster=json_TeamRoster
-                )
-                teamsRosters.append(teamRosterData)
+                json_TeamRoster: list = self.extract_team_roster_info(team["abbrv"])
+                if json_TeamRoster is not None:
+                    teamRosterData = DynamicObject(
+                        abbrv=team["abbrv"], id=team["id"], roster=json_TeamRoster
+                    )
+                    teamsRosters.append(teamRosterData)
+                    self._log.info(
+                        f"Successfully extracted team roster data for team: {team['abbrv']}"
+                    )
 
             # transform json data into list of models
             models = self.transform_team_roster_info(teamsRosters)
@@ -707,7 +710,6 @@ class nhl_etl_manager:
         try:
             self.clear_table("players")
             for playerModel in transformedData:
-                print(playerModel)
                 query = """
                     INSERT INTO players (id, first_name, m_initial, last_name, age, birth_place, headshot_url)
                     VALUES ({id}, '{first_name}', '{m_initial}', '{last_name}', {age}, '{birth_place}', '{headshot_url}');
@@ -738,6 +740,13 @@ class nhl_etl_manager:
 
     def extract_team_roster_info(self, team_abbrv: str) -> list:
         try:
+            urlDebug = api_url_request(
+                function_name="team_roster",
+                endpoint_url=f"v1/roster/{team_abbrv}/current",
+            ).endpoint_url
+            print(
+                f"Extracting team roster info for team: {team_abbrv} using URL: {urlDebug}"
+            )
             extracted_data = self._apiClient.fetch_nhl_data(
                 api_url_request(
                     function_name="team_roster",
@@ -749,7 +758,8 @@ class nhl_etl_manager:
             self._log.error(
                 f"extract_team_roster_info: An error occurred while extracting team roster info: {e}"
             )
-            raise Exception(f"An error occurred while extracting team roster info: {e}")
+            return None
+            # raise Exception(f"An error occurred while extracting team roster info: {e}")
 
     def transform_team_roster_info(self, teamsRosters: list) -> dict:
         try:
@@ -988,7 +998,7 @@ class nhl_etl_manager:
             game_ids = self._dbManager.execute_fetch(
                 f"select id from games where year={current_year} and month in (4,5,6);"
             )
-
+            print(game_ids)
             # extract game player stats data from NHL API
             jsonDataList = []
             for game_id in game_ids:
@@ -1906,7 +1916,6 @@ class nhl_etl_manager:
         try:
             self.clear_table("nhl_scores")
             for nhlScoreModel in transformedData:
-                print(nhlScoreModel)
                 query = """
                     insert into nhl_scores(date,home_team,home_team_image,away_team,away_team_image,home_score,away_score,
                                               first_period_home_score,second_period_home_score,third_period_home_score,overtime_home_score,
