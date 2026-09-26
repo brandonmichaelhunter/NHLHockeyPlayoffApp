@@ -418,9 +418,9 @@ class nhl_etl_manager:
 
     def run_data_extraction_process(self):
         try:
-            self.run_seasons_pipeline()
-            self.run_teams_pipeline()
-            self.run_team_roster_pipeline()
+            # self.run_seasons_pipeline()
+            # self.run_teams_pipeline()
+            # self.run_team_roster_pipeline()
             self.run_games_pipeline()
             self.run_game_player_stats_pipeline()
             self.run_game_box_score_pipeline()
