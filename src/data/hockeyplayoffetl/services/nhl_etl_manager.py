@@ -998,19 +998,21 @@ class nhl_etl_manager:
             game_ids = self._dbManager.execute_fetch(
                 f"select id from games where year={current_year} and month in (4,5,6);"
             )
-            print(game_ids)
+
             # extract game player stats data from NHL API
             jsonDataList = []
             for game_id in game_ids:
                 jsonData = self.extract_game_player_stats_info(
-                    f"https://api-web.nhle.com/v1/gamecenter/{game_id[0]}/boxscore"
+                    f"https://api-web.nhle.com/v1/gamecenter/{game_id['id']}/boxscore"
                 )
+
                 if jsonData is not None:
                     jsonDataList.append(jsonData)
                 else:
                     self._log.warning(
-                        f"No game player stats data found for game ID: {game_id[0]}"
+                        f"No game player stats data found for game ID: {game_id['id']}"
                     )
+
             # transform json data into list of models
             transformedData = self.transform_game_player_stats_info(jsonDataList)
 
@@ -1065,7 +1067,7 @@ class nhl_etl_manager:
                         "faceoffWinningPctg" in awayTeam
                         and awayTeam["faceoffWinningPctg"] is not None
                     ):
-                        faceoffWinningPctg = awayTeam["faceoffWinningPctg"]
+                        faceoffWinningPctg = int(awayTeam["faceoffWinningPctg"])
                     else:
                         faceoffWinningPctg = 0
                     toi = awayTeam["toi"]
@@ -1119,7 +1121,7 @@ class nhl_etl_manager:
                         "faceoffWinningPctg" in awayTeam
                         and awayTeam["faceoffWinningPctg"] is not None
                     ):
-                        faceoffWinningPctg = awayTeam["faceoffWinningPctg"]
+                        faceoffWinningPctg = int(awayTeam["faceoffWinningPctg"])
                     else:
                         faceoffWinningPctg = 0
                     toi = awayTeam["toi"]
@@ -1416,9 +1418,8 @@ class nhl_etl_manager:
                     pim=playerGameStatsModel.pim,
                     hits=playerGameStatsModel.hits,
                     powerPlayGoals=playerGameStatsModel.powerPlayGoals,
-                    faceoffWinningPctg=str(
-                        playerGameStatsModel.faceoffWinningPctg
-                    ).replace("'", "''"),
+                    # faceoffWinningPctg=str(playerGameStatsModel.faceoffWinningPctg).replace("'", "''"),
+                    faceoffWinningPctg=int(playerGameStatsModel.faceoffWinningPctg),
                     blockedShots=playerGameStatsModel.blockedShots,
                     shifts=playerGameStatsModel.shifts,
                     evenStrengthShotsAgainst=str(
@@ -1770,28 +1771,33 @@ class nhl_etl_manager:
                             game_score.away_score = 0
 
                         # Series info
-                        game_score.round = gameBoxScore["games"][i]["seriesStatus"][
-                            "round"
-                        ]
-                        game_score.game_number = gameBoxScore["games"][i][
-                            "seriesStatus"
-                        ]["gameNumberOfSeries"]
-                        neededToWinSeries = gameBoxScore["games"][i]["seriesStatus"][
-                            "neededToWin"
-                        ]
-                        game_score.series_info = ""
-                        topSeedWins = gameBoxScore["games"][i]["seriesStatus"][
-                            "topSeedWins"
-                        ]
-                        bottomSeedWins = gameBoxScore["games"][i]["seriesStatus"][
-                            "bottomSeedWins"
-                        ]
-                        topSeedName = gameBoxScore["games"][i]["seriesStatus"][
-                            "topSeedTeamAbbrev"
-                        ]
-                        bottomSeedName = gameBoxScore["games"][i]["seriesStatus"][
-                            "bottomSeedTeamAbbrev"
-                        ]
+                        if (
+                            "seriesStatus" in gameBoxScore["games"][i]
+                            and gameBoxScore["games"][i]["seriesStatus"] is not None
+                        ):
+                            game_score.round = gameBoxScore["games"][i]["seriesStatus"][
+                                "round"
+                            ]
+                            game_score.game_number = gameBoxScore["games"][i][
+                                "seriesStatus"
+                            ]["gameNumberOfSeries"]
+                            neededToWinSeries = gameBoxScore["games"][i][
+                                "seriesStatus"
+                            ]["neededToWin"]
+                            game_score.series_info = ""
+                            topSeedWins = gameBoxScore["games"][i]["seriesStatus"][
+                                "topSeedWins"
+                            ]
+                            bottomSeedWins = gameBoxScore["games"][i]["seriesStatus"][
+                                "bottomSeedWins"
+                            ]
+                            topSeedName = gameBoxScore["games"][i]["seriesStatus"][
+                                "topSeedTeamAbbrev"
+                            ]
+                            bottomSeedName = gameBoxScore["games"][i]["seriesStatus"][
+                                "bottomSeedTeamAbbrev"
+                            ]
+
                         if topSeedWins == 0 and bottomSeedWins == 0:
                             game_score.series_info = "Series has not started"
                         elif (
@@ -2041,93 +2047,97 @@ class nhl_etl_manager:
                                 awayScore = games["awayTeam"]["score"]
                             else:
                                 awayScore = 0
-
-                            topSeedsWin: str = games["seriesStatus"]["topSeedWins"]
-                            bottomSeedsWin: str = games["seriesStatus"][
-                                "bottomSeedWins"
-                            ]
-                            topSeedsTeamID: int = 0
-                            bottomSeedsTeamID: int = 0
                             if (
-                                homeTeamAbbrv
-                                == games["seriesStatus"]["topSeedTeamAbbrev"]
+                                "seriesStatus" in games
+                                and games["seriesStatus"] is not None
                             ):
-                                topSeedsTeamID = homeTeamID
-                                bottomSeedsTeamID = awayTeamID
-                            elif (
-                                awayTeamAbbrv
-                                == games["seriesStatus"]["topSeedTeamAbbrev"]
-                            ):
-                                topSeedsTeamID = awayTeamID
-                                bottomSeedsTeamID = homeTeamID
-
-                            seriesTitle: str = games["seriesStatus"]["seriesTitle"]
-                            round: str = games["seriesStatus"]["round"]
-                            stationInfo = games["tvBroadcasts"][0]["network"]
-                            gameNumberOfSeries: str = games["seriesStatus"][
-                                "gameNumberOfSeries"
-                            ]
-                            if (
-                                "winningGoalie" in games
-                                and games["winningGoalie"] is not None
-                            ):
-                                winningGoaliePlayerID: int = games["winningGoalie"][
-                                    "playerId"
+                                topSeedsWin: str = games["seriesStatus"]["topSeedWins"]
+                                bottomSeedsWin: str = games["seriesStatus"][
+                                    "bottomSeedWins"
                                 ]
-                            else:
-                                winningGoaliePlayerID = 0
+                                topSeedsTeamID: int = 0
+                                bottomSeedsTeamID: int = 0
+                                if (
+                                    homeTeamAbbrv
+                                    == games["seriesStatus"]["topSeedTeamAbbrev"]
+                                ):
+                                    topSeedsTeamID = homeTeamID
+                                    bottomSeedsTeamID = awayTeamID
+                                elif (
+                                    awayTeamAbbrv
+                                    == games["seriesStatus"]["topSeedTeamAbbrev"]
+                                ):
+                                    topSeedsTeamID = awayTeamID
+                                    bottomSeedsTeamID = homeTeamID
 
-                            if (
-                                "winningGoalScorer" in games
-                                and games["winningGoalScorer"] is not None
-                            ):
-                                winningGoalScorerPlayerID: int = games[
-                                    "winningGoalScorer"
-                                ]["playerId"]
-                            else:
-                                winningGoalScorerPlayerID = 0
-                            venueName = games["venue"]["default"]
-                            periods = games["periodDescriptor"]["number"]
-                            # determine series info
-                            series_info = ""
-                            if int(topSeedsWin) == 0 and int(bottomSeedsWin) == 0:
-                                series_info = "Series has not started"
-                            elif (
-                                int(topSeedsWin) > int(bottomSeedsWin)
-                                and int(topSeedsWin) < 4
-                            ):
-                                if homeTeamID == topSeedsTeamID:
-                                    series_info = f"{homeTeamAbbrv} leads series {topSeedsWin}-{bottomSeedsWin}"
+                                seriesTitle: str = games["seriesStatus"]["seriesTitle"]
+                                round: str = games["seriesStatus"]["round"]
+                                stationInfo = games["tvBroadcasts"][0]["network"]
+                                gameNumberOfSeries: str = games["seriesStatus"][
+                                    "gameNumberOfSeries"
+                                ]
+                                if (
+                                    "winningGoalie" in games
+                                    and games["winningGoalie"] is not None
+                                ):
+                                    winningGoaliePlayerID: int = games["winningGoalie"][
+                                        "playerId"
+                                    ]
+                                else:
+                                    winningGoaliePlayerID = 0
+
+                                if (
+                                    "winningGoalScorer" in games
+                                    and games["winningGoalScorer"] is not None
+                                ):
+                                    winningGoalScorerPlayerID: int = games[
+                                        "winningGoalScorer"
+                                    ]["playerId"]
+                                else:
+                                    winningGoalScorerPlayerID = 0
+
+                                venueName = games["venue"]["default"]
+                                periods = games["periodDescriptor"]["number"]
+                                # determine series info
+                                series_info = ""
+                                if int(topSeedsWin) == 0 and int(bottomSeedsWin) == 0:
+                                    series_info = "Series has not started"
+                                elif (
+                                    int(topSeedsWin) > int(bottomSeedsWin)
+                                    and int(topSeedsWin) < 4
+                                ):
+                                    if homeTeamID == topSeedsTeamID:
+                                        series_info = f"{homeTeamAbbrv} leads series {topSeedsWin}-{bottomSeedsWin}"
                                 elif awayTeamID == topSeedsTeamID:
                                     series_info = f"{awayTeamAbbrv} leads series {topSeedsWin}-{bottomSeedsWin}"
-                            elif (
-                                int(topSeedsWin) > int(bottomSeedsWin)
-                                and int(topSeedsWin) >= 4
-                            ):
-                                if homeTeamID == topSeedsTeamID:
-                                    series_info = f"{homeTeamAbbrv} wins series {topSeedsWin}-{bottomSeedsWin}"
-                                elif awayTeamID == topSeedsTeamID:
-                                    series_info = f"{awayTeamAbbrv} wins series {topSeedsWin}-{bottomSeedsWin}"
-                            elif (
-                                int(bottomSeedsWin) > int(topSeedsWin)
-                                and int(bottomSeedsWin) >= 4
-                            ):
-                                if homeTeamID == bottomSeedsTeamID:
-                                    series_info = f"{homeTeamAbbrv} wins series {bottomSeedsWin}-{topSeedsWin}"
-                                elif awayTeamID == bottomSeedsTeamID:
-                                    series_info = f"{awayTeamAbbrv} wins series {bottomSeedsWin}-{topSeedsWin}"
-                            elif (
-                                int(bottomSeedsWin) > int(topSeedsWin)
-                                and int(bottomSeedsWin) < 4
-                            ):
-                                if homeTeamID == bottomSeedsTeamID:
-                                    series_info = f"{homeTeamAbbrv} leads series {bottomSeedsWin}-{topSeedsWin}"
-                                elif awayTeamID == bottomSeedsTeamID:
-                                    series_info = f"{awayTeamAbbrv} leads series {bottomSeedsWin}-{topSeedsWin}"
-                            elif int(topSeedsWin) == int(bottomSeedsWin):
-                                series_info = (
-                                    f"Series is tied {topSeedsWin}-{bottomSeedsWin}"
-                                )
+                                elif (
+                                    int(topSeedsWin) > int(bottomSeedsWin)
+                                    and int(topSeedsWin) >= 4
+                                ):
+                                    if homeTeamID == topSeedsTeamID:
+                                        series_info = f"{homeTeamAbbrv} wins series {topSeedsWin}-{bottomSeedsWin}"
+                                    elif awayTeamID == topSeedsTeamID:
+                                        series_info = f"{awayTeamAbbrv} wins series {topSeedsWin}-{bottomSeedsWin}"
+                                elif (
+                                    int(bottomSeedsWin) > int(topSeedsWin)
+                                    and int(bottomSeedsWin) >= 4
+                                ):
+                                    if homeTeamID == bottomSeedsTeamID:
+                                        series_info = f"{homeTeamAbbrv} wins series {bottomSeedsWin}-{topSeedsWin}"
+                                    elif awayTeamID == bottomSeedsTeamID:
+                                        series_info = f"{awayTeamAbbrv} wins series {bottomSeedsWin}-{topSeedsWin}"
+                                elif (
+                                    int(bottomSeedsWin) > int(topSeedsWin)
+                                    and int(bottomSeedsWin) < 4
+                                ):
+                                    if homeTeamID == bottomSeedsTeamID:
+                                        series_info = f"{homeTeamAbbrv} leads series {bottomSeedsWin}-{topSeedsWin}"
+                                    elif awayTeamID == bottomSeedsTeamID:
+                                        series_info = f"{awayTeamAbbrv} leads series {bottomSeedsWin}-{topSeedsWin}"
+                                elif int(topSeedsWin) == int(bottomSeedsWin):
+                                    series_info = (
+                                        f"Series is tied {topSeedsWin}-{bottomSeedsWin}"
+                                    )
 
                             playoff_game_schedule_item: nhl_playoff_schedule = (
                                 nhl_playoff_schedule(
