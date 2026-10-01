@@ -1,3 +1,6 @@
+from src.api.hockeyplayoffapi.models.nhl_stats import nhl_goal_leaders
+import os
+from typing import Optional
 from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 
 from src.api.hockeyplayoffapi.models.nhl_stats import nhl_plusminus_leaders
@@ -8,9 +11,7 @@ from src.api.hockeyplayoffapi.models.nhl_stats import (
 from src.api.hockeyplayoffapi.models.nhl_stats import nhl_goaltending_gaa_leaders
 from src.api.hockeyplayoffapi.models.nhl_stats import nhl_goaltending_wins_leaders
 from src.api.hockeyplayoffapi.models.nhl_schedules import nhl_playoff_schedule
-from src.api.hockeyplayoffapi.models.nhl_stats import nhl_goal_leaders
-import os
-from typing import Optional
+
 from src.api.hockeyplayoffapi.models.nhl_teams import nhl_playoff_dates, teams
 from sqlmodel import create_engine
 from .sqlmodel_manager import SQLModelDBManager
@@ -25,7 +26,7 @@ def get_engine(database_url: Optional[str] = None, **engine_kwargs):
     """
     database_url = (database_url or os.getenv("DATABASE_URL") or "").strip()
     database_url = database_url.strip('"').strip("'")
-    print(f"Using database URL: {database_url}")
+
     if not database_url:
         print("Warning: DATABASE_URL not set, defaulting to local SQLite database.")
         repo_root = os.path.abspath(os.getcwd())

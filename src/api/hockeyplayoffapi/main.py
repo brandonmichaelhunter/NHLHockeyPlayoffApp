@@ -60,18 +60,6 @@ def inject_db(func):
     return wrapper
 
 
-app = FastAPI()
-
-# used to attach static files to the API for serving HTML templates and static assets.
-app.mount(
-    "/static",
-    StaticFiles(directory=str(Path(TEMPLATE_BASE_DIR, "templates"))),
-    name="static",
-)
-# used to support rendering dynamic HTML template using Jinja1.
-templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
-
-
 # manages the life cycle of the FastAPI application.
 @asynccontextmanager
 async def ManageLifecycle(app: FastAPI):
@@ -89,6 +77,15 @@ async def ManageLifecycle(app: FastAPI):
 
 # Initialize application
 app = FastAPI(lifespan=ManageLifecycle)
+
+# used to attach static files to the API for serving HTML templates and static assets.
+app.mount(
+    "/static",
+    StaticFiles(directory=str(Path(TEMPLATE_BASE_DIR, "templates"))),
+    name="static",
+)
+# used to support rendering dynamic HTML template using Jinja1.
+templates = Jinja2Templates(directory=str(Path(TEMPLATE_BASE_DIR, "templates")))
 
 
 @app.get("/health")
