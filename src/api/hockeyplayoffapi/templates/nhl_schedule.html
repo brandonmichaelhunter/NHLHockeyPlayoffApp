@@ -1,45 +1,69 @@
-<\!-- templates/nhl_schedule.html -->
-<div class="row g-4" id="nhlschedulecontainer">
-  {% for schedule in schedules %}
-  <div class="col-12">
-    <div class="card-panel">
-      <div class="d-flex flex-column gap-3">
-        <div class="text-start">
-          <h2 class="mb-2">{{ schedule.gameDate }}</h2>
-          <p class="seriesInfoText mb-0">{{ schedule.seriesInfo }}</p>
+<!-- templates/nhl_schedule.html -->
+<div class="container schedule-page">
+  {% if schedules | length == 0 %}
+    <p class="text-muted">No games found.</p>
+  {% else %}
+    {% set current_date = none %}
+    {% for schedule in schedules %}
+    <h3> {{ schedule.gameDate }}</h3>
+      <!-- {% if schedule.gameDate != current_date %} -->
+        {% if current_date is none %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+        <div class="schedule-day mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="schedule-date mb-0">{{ schedule.gamedate }}</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-header">
+                <tr>
+                  <th style="width:80px">Time</th>
+                  <th>Matchup</th>
+                  <th class="text-center" style="width:110px">Score</th>
+                  <th style="width:160px">Series</th>
+                  <th style="width:90px">Round</th>
+                  <th style="width:120px">TV</th>
+                  <th style="width:180px">Venue</th>
+                </tr>
+              </thead>
+              <tbody>
+        {% set current_date = schedule.gamedate %}
+      <!-- {% endif %} -->
+
+      <tr>
+        <td class="text-muted">{{ schedule.gamestarttime if schedule.gamestarttime is defined else '' }}</td>
+        <td>
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-truncate">
+              <div class="matchup">
+                <span class="team-away">{{ schedule.awayteamnameabbrv or schedule.awayteamname }}</span>
+                <span class="vs"> @ </span>
+                <span class="team-home">{{ schedule.hometeamnameabbrv or schedule.hometeamname }}</span>
+              </div>
+              <div class="small text-muted">
+                <span>{{ schedule.awayteamname }} vs {{ schedule.hometeamname }}</span>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td class="text-center">
+          <span class="score">{{ schedule.awayscore if schedule.awayscore is not none else '-' }}</span>
+          <span class="mx-1 text-muted">/</span>
+          <span class="score">{{ schedule.homescore if schedule.homescore is not none else '-' }}</span>
+        </td>
+        <td class="seriesInfoText">{{ schedule.seriestitle or schedule.seriesinfo or '' }}</td>
+        <td class="playoff-round">{{ schedule.playoffround or '' }}</td>
+        <td>{{ schedule.tvStation or '' }}</td>
+        <td class="text-truncate">{{ schedule.hometeamvenuename or '' }}</td>
+      </tr>
+
+    {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="table-responsive">
-          <table class="table table-sm table-hover align-middle mb-0">
-            <thead class="table_header">
-              <tr>
-                <th class="text-start">MatchUp</th>
-                <th>Results</th>
-                <th>Series Title</th>
-                <th>Round</th>
-                <th>TV Station</th>
-                <th>Venue</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="text-start">
-                  <div class="matchup_text">{{ schedule.awayTeamName }} @ {{ schedule.homeTeamName }}</div>
-                </td>
-                <td>
-                  <span>{{ schedule.awayTeamNameAbbrv }} {{ schedule.awayScore }}</span>
-                  <span class="text-muted"> / </span>
-                  <span>{{ schedule.homeTeamNameAbbrv }} {{ schedule.homeScore }}</span>
-                </td>
-                <td>{{ schedule.seriesTitle }}</td>
-                <td>{{ schedule.playoffRound }}</td>
-                <td>{{ schedule.tvStation }}</td>
-                <td>{{ schedule.homeTeamVenueName }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
+  {% endif %}
 </div>

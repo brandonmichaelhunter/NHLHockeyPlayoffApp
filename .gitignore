@@ -238,3 +238,6 @@ validate-output.txt
 infra/terraform/terraform.tfvars
 infra/terraform/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.80.0/darwin_amd64/terraform-provider-azurerm_v4.80.0_x5
 infra/terraform/.terraform.lock.hcl
+# Ignore environment files in environments/ except .env.example
+environments/*.env
+!environments/.env.example

@@ -121,6 +121,7 @@ Once activated, your shell will use the project Python environment.
 From the repository root:
 
 ```bash
+export DATABASE_URL="postgresql://<connection_string>"
 uv run poe run_api
 ```
 
@@ -145,6 +146,7 @@ uv run uvicorn src.api.hockeyplayoffapi.main:app --reload --host 0.0.0.0 --port 
 From the repository root:
 
 ```bash
+export DATABASE_URL="postgresql://<connection_string>"
 uv run poe run_etl
 ```
 
