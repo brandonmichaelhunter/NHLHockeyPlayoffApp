@@ -418,9 +418,9 @@ class nhl_etl_manager:
 
     def run_data_extraction_process(self):
         try:
-            # self.run_seasons_pipeline()
-            # self.run_teams_pipeline()
-            # self.run_team_roster_pipeline()
+            self.run_seasons_pipeline()
+            self.run_teams_pipeline()
+            self.run_team_roster_pipeline()
             self.run_games_pipeline()
             self.run_game_player_stats_pipeline()
             self.run_game_box_score_pipeline()
@@ -1619,28 +1619,29 @@ class nhl_etl_manager:
                 playerID = item["id"]
                 season = currentSeason
                 playerDetails = self.__getTeamPlayerDetails(playerID)
-                print(playerDetails)
-                first_name = playerDetails[0]
-                last_name = playerDetails[1]
-                headshot_url = playerDetails[2]
-                team_name = playerDetails[3]
-                team_abbrv = playerDetails[4]
-                teamlogo_url = playerDetails[5]
-                team_id = playerDetails[6]
-                wins = item["value"]
-                goaltendingWinLeaderModel = nhl_goaltending_win_leader(
-                    player_id=playerID,
-                    team_id=team_id,
-                    seasons=season,
-                    first_name=first_name,
-                    last_name=last_name,
-                    team_name=team_name,
-                    team_abbrv=team_abbrv,
-                    wins=wins,
-                    headshot_url=headshot_url,
-                    teamlogo_url=teamlogo_url,
-                )
-                transformed_data.append(goaltendingWinLeaderModel)
+                print("Player Details", playerDetails)
+                if playerDetails is not None:
+                    first_name = playerDetails["first_name"]
+                    last_name = playerDetails["last_name"]
+                    headshot_url = playerDetails["headshot_url"]
+                    team_name = playerDetails["name"]
+                    team_abbrv = playerDetails["abbrv"]
+                    teamlogo_url = playerDetails["logo_url"]
+                    team_id = playerDetails["team_id"]
+                    wins = item["value"]
+                    goaltendingWinLeaderModel = nhl_goaltending_win_leader(
+                        player_id=playerID,
+                        team_id=team_id,
+                        seasons=season,
+                        first_name=first_name,
+                        last_name=last_name,
+                        team_name=team_name,
+                        team_abbrv=team_abbrv,
+                        wins=wins,
+                        headshot_url=headshot_url,
+                        teamlogo_url=teamlogo_url,
+                    )
+                    transformed_data.append(goaltendingWinLeaderModel)
 
             return transformed_data
         except Exception as e:

@@ -1,18 +1,32 @@
-from src.api.hockeyplayoffapi.models.nhl_stats import nhl_goal_leaders
+import importlib.util
 import os
 from typing import Optional
-from src.api.hockeyplayoffapi.models.nhl_scores import nhl_scores
 
-from src.api.hockeyplayoffapi.models.nhl_stats import nhl_plusminus_leaders
-from src.api.hockeyplayoffapi.models.nhl_stats import nhl_points_leaders
-from src.api.hockeyplayoffapi.models.nhl_stats import (
-    nhl_goaltending_save_percentage_leaders,
-)
-from src.api.hockeyplayoffapi.models.nhl_stats import nhl_goaltending_gaa_leaders
-from src.api.hockeyplayoffapi.models.nhl_stats import nhl_goaltending_wins_leaders
-from src.api.hockeyplayoffapi.models.nhl_schedules import nhl_playoff_schedule
+if importlib.util.find_spec("hockeyplayoffapi") is not None:
+    from hockeyplayoffapi.models.nhl_scores import nhl_scores
+    from hockeyplayoffapi.models.nhl_stats import (
+        nhl_goal_leaders,
+        nhl_goaltending_gaa_leaders,
+        nhl_goaltending_save_percentage_leaders,
+        nhl_goaltending_wins_leaders,
+        nhl_plusminus_leaders,
+        nhl_points_leaders,
+    )
+    from hockeyplayoffapi.models.nhl_schedules import nhl_playoff_schedule
+    from hockeyplayoffapi.models.nhl_teams import nhl_playoff_dates, teams
+else:
+    from api.hockeyplayoffapi.models.nhl_scores import nhl_scores
+    from api.hockeyplayoffapi.models.nhl_stats import nhl_goal_leaders
+    from api.hockeyplayoffapi.models.nhl_stats import nhl_plusminus_leaders
+    from api.hockeyplayoffapi.models.nhl_stats import nhl_points_leaders
+    from api.hockeyplayoffapi.models.nhl_stats import (
+        nhl_goaltending_save_percentage_leaders,
+    )
+    from api.hockeyplayoffapi.models.nhl_stats import nhl_goaltending_gaa_leaders
+    from api.hockeyplayoffapi.models.nhl_stats import nhl_goaltending_wins_leaders
+    from api.hockeyplayoffapi.models.nhl_schedules import nhl_playoff_schedule
+    from api.hockeyplayoffapi.models.nhl_teams import nhl_playoff_dates, teams
 
-from src.api.hockeyplayoffapi.models.nhl_teams import nhl_playoff_dates, teams
 from sqlmodel import create_engine
 from .sqlmodel_manager import SQLModelDBManager
 
@@ -108,7 +122,9 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('L','R','C','D') and d.id = :TeamName and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID, goals
+                            group by playerID, goals,b.first_name,b.last_name ,
+                                b.headshot_url ,a.position ,
+                                d.name , d.abbrv , d.logo_url 
                             order by total_goals  desc
                             limit 5
                     """,
@@ -127,7 +143,9 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('L','R','C','D') and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID, goals
+                            group by playerID, goals,b.first_name,b.last_name ,
+                                b.headshot_url ,a.position ,
+                                d.name , d.abbrv , d.logo_url 
                             order by total_goals  desc
                             limit 5
                     """
@@ -153,7 +171,9 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('L','R','C','D') and d.id = :TeamName and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID
+                            group by playerID, plusMinus,b.first_name,b.last_name ,
+                                b.headshot_url ,a.position ,
+                                d.name , d.abbrv , d.logo_url
                             order by plus_minus  desc
                             limit 5
                     """,
@@ -172,7 +192,9 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('L','R','C','D') and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID
+                            group by playerID, plusMinus,b.first_name,b.last_name ,
+                                b.headshot_url ,a.position ,
+                                d.name , d.abbrv , d.logo_url
                             order by plus_minus  desc
                             limit 5
                     """
@@ -196,7 +218,7 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('L','R','C','D') and d.id = :TeamName and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID
+                            group by playerID, b.first_name, b.last_name, b.headshot_url, a.position, d.name, d.abbrv, d.logo_url
                             order by total_points  desc
                             limit 5
                     """,
@@ -215,7 +237,7 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('L','R','C','D') and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID
+                            group by playerID, b.first_name, b.last_name, b.headshot_url, a.position, d.name, d.abbrv, d.logo_url
                             order by total_points  desc
                             limit 5
                     """
@@ -241,7 +263,7 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('G') and d.id = :TeamName and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID
+                            group by playerID, b.first_name, b.last_name, b.headshot_url, a.position, d.name, d.abbrv, d.logo_url
                             order by save_percentage  desc
                             limit 5
                     """,
@@ -260,7 +282,7 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('G') and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) )
-                            group by playerID
+                            group by playerID, b.first_name, b.last_name, b.headshot_url, a.position, d.name, d.abbrv, d.logo_url
                             order by save_percentage  desc
                             limit 5
                     """
@@ -276,23 +298,25 @@ class DBManagerFactory:
             rows = self.dbContext.execute_fetch(
                 """
                             select distinct playerID as player_id,
-                            avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2)) as gaa,
-                            RANK() OVER (ORDER BY avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2))  asc) as league_ranking,
-                                                        b.first_name as player_firstname, b.last_name  as player_lastname,
-                            b.headshot_url as player_headshot,
-                            a.position as player_position,
-                            d.name as team_name,
-                            d.abbrv as team_abbrv,
-                            d.logo_url as team_logo
-                            from player_game_stats a inner join players b on b.id = a.playerID
-                                                                                inner join team_roster c on c.player_id = b.id
-                                                                                inner join teams d on d.id = c.team_id
-                            where a.position in ('G') and d.id = :TeamName and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
-                                        gameID in (select id from games where year = 2026 and month in (5)) ) and
-                                        ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) > 1
-                            group by gameID
-                            order by gaa  asc
-                            limit 5
+                                    avg(CAST(ROUND(CAST((goalsAgainst * 60) / ROUND(CAST((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0)) AS numeric),2) AS numeric), 2) AS REAL)) as gaa,
+                                    RANK() OVER (ORDER BY avg(CAST(ROUND(CAST((goalsAgainst * 60) / ROUND(CAST((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0)) AS numeric),2) AS numeric), 2) AS REAL))  asc) as league_ranking,
+                                                                b.first_name as player_firstname, b.last_name  as player_lastname,
+                                    b.headshot_url as player_headshot,
+                                    a.position as player_position,
+                                    d.name as team_name,
+                                    d.abbrv as team_abbrv,
+                                    d.logo_url as team_logo
+                                    from player_game_stats a inner join players b on b.id = a.playerID
+                                                                                        inner join team_roster c on c.player_id = b.id
+                                                                                        inner join teams d on d.id = c.team_id
+                                    where a.position in ('G') and d.id = :TeamName and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
+                                                gameID in (select id from games where year = 2026 and month in (5)) ) and
+                                                ROUND(CAST((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0)) AS numeric),2) > 1
+                                    group by playerID, gameID, b.first_name,b.last_name ,
+                                        b.headshot_url ,a.position ,
+                                        d.name , d.abbrv , d.logo_url 
+                                    order by gaa  asc
+                                    limit 5;
                             """,
                 TeamName=TeamName,
             )
@@ -300,8 +324,8 @@ class DBManagerFactory:
             rows = self.dbContext.execute_fetch(
                 """
                             select distinct playerID as player_id,
-                            avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2)) as gaa,
-                            RANK() OVER (ORDER BY avg(ROUND((goalsAgainst * 60) / ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) , 2))  asc) as league_ranking,
+                            avg(CAST(ROUND(CAST((goalsAgainst * 60) / ROUND(CAST((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0)) AS numeric),2) AS numeric), 2) AS REAL)) as gaa,
+                            RANK() OVER (ORDER BY avg(CAST(ROUND(CAST((goalsAgainst * 60) / ROUND(CAST((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0)) AS numeric),2) AS numeric), 2) AS REAL))  asc) as league_ranking,
                                                         b.first_name as player_firstname, b.last_name  as player_lastname,
                             b.headshot_url as player_headshot,
                             a.position as player_position,
@@ -313,10 +337,12 @@ class DBManagerFactory:
                                                                                 inner join teams d on d.id = c.team_id
                             where a.position in ('G') and (gameID in (select id from games where year = 2026 and month in (4) and day > 15) or
                                         gameID in (select id from games where year = 2026 and month in (5)) ) and
-                                        ROUND((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0) ),2) > 1
-                            group by gameID
+                                        ROUND(CAST((CAST(SUBSTR(toi, 1, 2) AS REAL) +  (CAST(SUBSTR(toi, 4, 2) AS REAL) / 60.0)) AS numeric),2) > 1
+                            group by playerID, gameID, b.first_name,b.last_name ,
+                                b.headshot_url ,a.position ,
+                                d.name , d.abbrv , d.logo_url 
                             order by gaa  asc
-                            limit 5
+                            limit 5;
                             """
             )
         return [nhl_goaltending_gaa_leaders(**row) for row in rows]
@@ -375,7 +401,7 @@ class DBManagerFactory:
 
         rows = self.dbContext.execute_fetch(
             """
-                            select distinct a.game_date as gameDate, a.start_time as gameStartTime,
+                            select distinct a.game_date as gamedate, a.start_time as gamestarttime,
                             away.name as awayTeamName, a.awayTeamScore as awayScore, away.abbrv as awayTeamNameAbbrv, away.logo_url as awayTeamLogoUrl,
                             home.name as homeTeamName, a.homeTeamScore as homeScore, home.abbrv as homeTeamNameAbbrv, home.logo_url as homeTeamLogoUrl,
                             a.seriesTitle as seriesTitle, a.round as playoffRound, a.stationinfo as tvStation,  a.venueName as homeTeamVenueName,
@@ -389,9 +415,11 @@ class DBManagerFactory:
                             order by a.game_date desc ;
                             """
         )
+
         schedule: list[nhl_playoff_schedule] = [
             nhl_playoff_schedule(**row) for row in rows
         ]
+
         return schedule
 
 

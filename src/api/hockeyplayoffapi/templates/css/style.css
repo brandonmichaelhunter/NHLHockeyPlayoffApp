@@ -176,8 +176,18 @@ a:hover {
 #nhlstatscontainer .col-md-4,
 #nhlschedulecontainer .col-md-4,
 #nhlschedulecontainer .col-12 {
-  width: 100%;
-  max-width: 420px;
+  width: auto;
+  max-width: none;
+}
+
+@media (min-width: 768px) {
+  #nhlScores .col-md-4,
+  #nhlstatscontainer .col-md-4,
+  #nhlschedulecontainer .col-md-4 {
+    flex: 0 0 33.333333%;
+    width: 33.333333%;
+    max-width: 33.333333%;
+  }
 }
 
 #nhlscorestablessection,
@@ -466,4 +476,46 @@ a:hover {
   #nhlschedulecontainer .col-12 {
     max-width: 100%;
   }
+}
+h2.leader_titles {
+  color: var(--text) !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+/* Schedule page tweaks to mimic ESPN compact table */
+.schedule-date { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+.table-sm td, .table-sm th { padding: .45rem .6rem; }
+.score { font-weight: 700; }
+.matchup .team-away, .matchup .team-home { font-weight: 600; }
+.text-truncate { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vs { color: var(--muted); margin: 0 .35rem; }
+.schedule-day { border-radius: 12px; padding: .5rem; background: rgba(255,255,255,0.02); }
+
+/* Dim team names, series info, and round text for better contrast */
+.team-name, .matchup .team-away, .matchup .team-home, .seriesInfoText, .playoff-round {
+  color: rgba(255,255,255,0.95); /* much lighter for better legibility */
+}
+
+/* Make small meta text slightly lighter but not as bright as primary */
+.matchup .small, .game-round, .seriesInfoText small {
+  color: rgba(255,255,255,0.82);
+}
+
+/* Scoreboard compact style */
+.scoreboard-row { background: rgba(255,255,255,0.02); border-radius: 0.65rem; }
+.team-logo { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: rgba(255,255,255,0.03); }
+.score-large { font-weight: 800; font-size: 1.25rem; color: var(--text); }
+.vs-text { opacity: 0.8; }
+.score-detail { margin-top: .5rem; border-top: 1px solid rgba(255,255,255,0.04); }
+.scoreboard-row + .score-detail { margin-top: .5rem; }
+
+/* Lighter text for scores page meta */
+.scoreboard-row .team-name, .scoreboard-row .vs-text, .score-right, .scoreboard-row .team-name.small, .score-right div {
+  color: rgba(255,255,255,0.95);
+}
+
+/* Slightly lower opacity for the small detail rows */
+.score-detail .table td, .score-detail .table th {
+  color: rgba(255,255,255,0.88);
 }
