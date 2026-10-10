@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-website-service
+spec:
+  type: LoadBalancer # 👈 This requests a public IP from your cloud provider
+  selector:
+    app: nhlplayoffapp  # 👈 This MUST exactly match the Deployment's template labels
+  ports:
+    - protocol: TCP
+      port: 81        # The public port you will type into your browser (http://<IP>:81)
+      targetPort: 8000  # Must match the containerPort specified in your deployment

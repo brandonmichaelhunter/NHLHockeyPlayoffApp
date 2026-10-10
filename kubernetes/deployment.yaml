@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nhlplayoffapp-deployment
+  labels:
+    app: nhlplayoffapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nhlplayoffapp
+  template:
+    metadata:
+      labels:
+        app: nhlplayoffapp
+    spec:
+      imagePullSecrets:
+       - name: ghcr-secret
+      containers:
+       - name: nhlplayoffapp-container
+         image: ghcr.io/brandonmichaelhunter/nhlplayoffapp:latest
+         imagePullPolicy: Always
+         ports:
+          - containerPort: 8000
+         # --- HEALTH PROBES START HERE ---
+         livenessProbe:
+           httpGet:
+              path: /health
+              port: 8000
+           initialDelaySeconds: 20
+           periodSeconds: 10
+           timeoutSeconds: 5
+           failureThreshold: 3
+          
+         readinessProbe:
+           httpGet:
+              path: /health/ready
+              port: 8000
+           initialDelaySeconds: 20
+           periodSeconds: 10
+           timeoutSeconds: 5
+           failureThreshold: 3
+         # --- HEALTH PROBES END HERE ---
+         # ADD THIS BLOCK TO FIX THE "INSUFFICIENT CPU" ERROR
+         resources:
+           requests:
+             cpu: "50m"      # Only asks for 5% of a single CPU core per pod
+             memory: "64Mi"  # Asks for 64MB of RAM
+           limits:
+             cpu: "200m"     # Allows the pod to burst to 20% CPU if needed
+             memory: "128Mi" # Hard ceiling for memory
