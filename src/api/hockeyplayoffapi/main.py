@@ -9,7 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.encoders import jsonable_encoder
 import os
 from pathlib import Path
+import logging
 
+from shared.db.appLogger import appLogger
 from .models.nhl_schedules import nhl_playoff_schedule
 
 
@@ -66,12 +68,12 @@ async def ManageLifecycle(app: FastAPI):
     try:
         global db_manager
         if db_manager is None:
-            print("Initializing database once..", flush=True)
+            api_logger.info("Initializing database once..")
             db_manager = DBManagerFactory(engine=None)
         yield
-        print("Shutting down application...", flush=True)
+        api_logger.info("Shutting down application...")
     except Exception as e:
-        print(f"CRITICAL: Database initialization failed: {e}", flush=True)
+        api_logger.critical(f"CRITICAL: Database initialization failed: {e}")
         raise
 
 
@@ -106,7 +108,7 @@ async def check_database_connection():
             else:
                 return False
     except Exception as e:
-        print(f"Database connection error: {e}")
+        api_logger.error(f"Database connection error: {e}")
         return False
 
 
@@ -126,7 +128,9 @@ async def read_nhl_scores(
 ):
 
     nhlScores = get_nhl_scores_by_date(nhlScoreDateSelect=nhlScoreDateSelect)
-
+    api_logger.info(
+        f"Retrieved {len(nhlScores)} NHL scores for date: {nhlScoreDateSelect}"
+    )
     if hx_request != "false":
         resp = templates.TemplateResponse(
             request=request, name="nhlscores.html", context={"nhlScores": nhlScores}
@@ -175,7 +179,7 @@ async def get_nhl_teams(request: Request):
 
 @app.get("/get_nhl_stats", response_class=HTMLResponse)
 async def get_nhl_stats(request: Request, teams: int = 0):
-    print(f"Getting NHL Stats for Team: {teams}")
+    api_logger.info(f"Getting NHL Stats for Team: {teams}")
     playerGoalRanks = get_nhl_goal_leaders(TeamName=teams)
     playerPlusMinusRanks = get_nhl_plusminus_leaders(TeamName=teams)
     playerPointsRanks = get_nhl_points_leaders(TeamName=teams)
@@ -219,7 +223,7 @@ def get_nhl_teams_data() -> list[teams]:
 
 
 def get_nhl_goal_leaders(TeamName: int = 0) -> list[nhl_goal_leaders]:
-    print(f"Getting NHL Goal Leaders for Team: {TeamName}")
+    api_logger.info(f"Getting NHL Goal Leaders for Team: {TeamName}")
     global db_manager
     if db_manager is None:
         raise ValueError("DB manager has not been initialized.")
@@ -229,11 +233,13 @@ def get_nhl_goal_leaders(TeamName: int = 0) -> list[nhl_goal_leaders]:
 
 @inject_db
 def get_nhl_plusminus_leaders(db, TeamName: int = 0) -> list[nhl_goal_leaders]:
+    api_logger.info(f"Getting NHL Plus/Minus Leaders for Team: {TeamName}")
     return db.get_nhl_plusminus_leaders(TeamName=TeamName)
 
 
 @inject_db
 def get_nhl_points_leaders(db, TeamName: int = 0) -> list[nhl_points_leaders]:
+    api_logger.info(f"Getting NHL Points Leaders for Team: {TeamName}")
     return db.get_nhl_points_leaders(TeamName=TeamName)
 
 
@@ -241,6 +247,9 @@ def get_nhl_points_leaders(db, TeamName: int = 0) -> list[nhl_points_leaders]:
 def get_nhl_goaltending_save_percentage_leaders(
     db, TeamName: int = 0
 ) -> list[nhl_goaltending_save_percentage_leaders]:
+    api_logger.info(
+        f"Getting NHL Goaltending Save Percentage Leaders for Team: {TeamName}"
+    )
     return db.get_nhl_goaltending_save_percentage_leaders(TeamName=TeamName)
 
 
@@ -248,7 +257,7 @@ def get_nhl_goaltending_save_percentage_leaders(
 def get_nhl_goaltending_gaa_leaders(
     db, TeamName: int = 0
 ) -> list[nhl_goaltending_gaa_leaders]:
-
+    api_logger.info(f"Getting NHL Goaltending GAA Leaders for Team: {TeamName}")
     return db.get_nhl_goaltending_gaa_leaders(TeamName=TeamName)
     # return [nhl_goaltending_gaa_leaders(**row) for row in rows]
 
@@ -280,3 +289,8 @@ def read_item(item_id: int, q: str | None = None):
 @app.get("/appname")
 async def get_app_name():
     return {"app_name": "Hockey Playoff API"}
+
+
+api_logger = appLogger(
+    "nhl_api", log_file="src/logs/nhl_api.log", level=logging.INFO
+).get_logger()
