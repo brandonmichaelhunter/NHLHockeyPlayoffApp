@@ -245,7 +245,18 @@ jobs:
            container-registry-url: ${{ env.REGISTRY }}
            container-registry-username: ${{ github.repository_owner }}
            container-registry-password: ${{ secrets.GHCR_PAT }}
-           
+
+        - name: Create DATABASE_URL Secret
+          uses: azure/k8s-create-secret@v4
+          with:
+            namespace: ${{ env.NAMESPACE }}
+            secret-type: 'generic'
+            secret-name: 'app-secrets'
+            data: |
+              {
+                "database_url": "${{secrets.DATABASE_URL}}"
+              } 
+            
         - name: Deploy to AKS
           uses: azure/k8s-deploy@v5
           with:
