@@ -34,7 +34,7 @@ RUN uv sync --locked
 COPY ./src/api/ .
 WORKDIR /api/shared
 COPY ./src/shared .
-WORKDIR /api/logs
+WORKDIR /src/logs
 #COPY ./src/logs .
 WORKDIR /api
 
