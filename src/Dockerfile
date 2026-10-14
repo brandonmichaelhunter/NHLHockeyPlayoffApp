@@ -1,8 +1,11 @@
 #FROM ghcr.io/astral-sh/uv:debian-slim
 #FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
-FROM docker.io/astral/uv:python3.12-bookworm-slim
+#FROM docker.io/astral/uv:python3.12-bookworm-slim
+#FROM docker.io/astral-sh/uv:python3.12-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 
 
 # Disable development dependencies
@@ -27,9 +30,11 @@ COPY ./pyproject.toml ./uv.lock ./
 RUN uv sync --locked 
 
 #COPY ./src/shared /shared
+
 COPY ./src/api/ .
 WORKDIR /api/shared
 COPY ./src/shared .
+COPY ./src/logs .
 WORKDIR /api
 
 #COPY ./src/api .

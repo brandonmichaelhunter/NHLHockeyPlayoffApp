@@ -29,6 +29,9 @@ else:
 
 from sqlmodel import create_engine
 from .sqlmodel_manager import SQLModelDBManager
+from .appLogger import appLogger
+
+logger = appLogger("DBFactory", log_file="src/logs/db_factory.log").get_logger()
 
 
 def get_engine(database_url: Optional[str] = None, **engine_kwargs):
@@ -38,17 +41,28 @@ def get_engine(database_url: Optional[str] = None, **engine_kwargs):
     environment. If that is not set, default to a file-based SQLite inside
     the repo (useful for local API runs).
     """
+    logger.info("Initializing database engine...")
+    logger.info("Provided database_url: %s", database_url)
     database_url = (database_url or os.getenv("DATABASE_URL") or "").strip()
     database_url = database_url.strip('"').strip("'")
 
     if not database_url:
-        print("Warning: DATABASE_URL not set, defaulting to local SQLite database.")
+        logger.warning(
+            "Warning: DATABASE_URL not set, defaulting to local SQLite database."
+        )
         repo_root = os.path.abspath(os.getcwd())
         default = (
             f"sqlite:///{os.path.join(repo_root, 'src', 'data', 'hockeyplayoff.db')}"
         )
         database_url = default
-    return create_engine(database_url, **engine_kwargs)
+    try:
+        logger.info("Creating SQLModel engine for database: %s", database_url)
+        engine = create_engine(database_url, **engine_kwargs)
+        logger.info("Database engine created successfully.")
+        return engine
+    except Exception:
+        logger.exception("Failed to create database engine.")
+        raise
 
 
 def get_db_manager(engine=None, **engine_kwargs) -> SQLModelDBManager:
