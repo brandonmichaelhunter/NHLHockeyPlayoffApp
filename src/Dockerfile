@@ -5,12 +5,7 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-RUN apt-get update && apt-get install -y \
-    nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
 
-RUN npm install
 
 
 # Disable development dependencies
@@ -22,6 +17,9 @@ ENV UV_NO_DEV=1 \
     DOCKER_ENV=true \
     # Force uv to use the system Python environment instead of creating a nested venv
     UV_SYSTEM_PYTHON=1
+    
+ARG DATABASE_URL_KEY
+ENV DATABASE_URL=$DATABASE_URL_KEY
 
 #WORKDIR /shared
 
