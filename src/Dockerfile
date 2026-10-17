@@ -43,12 +43,6 @@ WORKDIR /api
 
 #COPY ./src/api .
 
-RUN --mount=type=secret,id=DATABASEURL \
-    export DATABASE_URL=$(cat /run/secrets/DATABASEURL) && \
-    echo "Using the secret securely..." && \
-    # Execute your build command/script that requires the env variable here:
-    npm run build -- --token=$DATABASE_URL
-
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 # Add this before the ENTRYPOINT
