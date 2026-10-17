@@ -216,15 +216,16 @@ jobs:
         - name: Build and Push
           if: steps.determine_bump.outputs.bump != 'false'
           uses: docker/build-push-action@v5
-          env:
-            DATABASE_URL: ${{secrets.DATABASE_URL}}
+          #env:
+          #  DATABASE_URL: ${{secrets.DATABASE_URL}}
           with:
             context: .
             file: ./src/Dockerfile
             push: true
             platforms: linux/amd64,linux/arm64
-            secret-envs: |
-              databaseUrl=DATABASE_URL
+            # Pass the GitHub secret to Docker BuildKit
+            secrets: |
+              "DATABASEURL=${{secrets.DATABASE_URL}}"
             tags: |
               ghcr.io/${{ github.repository_owner }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
               ghcr.io/${{ github.repository_owner }}/nhlplayoffapp:latest
