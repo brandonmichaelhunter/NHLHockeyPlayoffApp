@@ -216,15 +216,30 @@ jobs:
         - name: Build and Push
           if: steps.determine_bump.outputs.bump != 'false'
           uses: docker/build-push-action@v5
+          env:
+            DATABASE_URL: ${{secrets.DATABASE_URL}}
           with:
             context: .
             file: ./src/Dockerfile
             push: true
             platforms: linux/amd64,linux/arm64
+            secret-envs: |
+              databaseUrl=DATABASE_URL
             tags: |
               ghcr.io/${{ github.repository_owner }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
               ghcr.io/${{ github.repository_owner }}/nhlplayoffapp:latest
 
+        #- name: Create DATABASE_URL Secret
+        #  uses: azure/k8s-create-secret@v4
+        #  with:
+        #    namespace: ${{ env.NAMESPACE }}
+        #    secret-type: 'generic'
+        #    secret-name: 'app-secrets'
+        #    data: |
+        #      {
+        #        "database_url": "${{secrets.DATABASE_URL}}"
+        #     }
+        
         - name: Azure Login
           uses: azure/login@v2
           with:
@@ -246,16 +261,16 @@ jobs:
            container-registry-username: ${{ github.repository_owner }}
            container-registry-password: ${{ secrets.GHCR_PAT }}
 
-        - name: Create DATABASE_URL Secret
-          uses: azure/k8s-create-secret@v4
-          with:
-            namespace: ${{ env.NAMESPACE }}
-            secret-type: 'generic'
-            secret-name: 'app-secrets'
-            data: |
-              {
-                "database_url": "${{secrets.DATABASE_URL}}"
-              } 
+        #- name: Create DATABASE_URL Secret
+        #  uses: azure/k8s-create-secret@v4
+        #  with:
+        #    namespace: ${{ env.NAMESPACE }}
+        #    secret-type: 'generic'
+        #    secret-name: 'app-secrets'
+        #    data: |
+        #      {
+        #        "database_url": "${{secrets.DATABASE_URL}}"
+        #     } 
             
         - name: Deploy to AKS
           uses: azure/k8s-deploy@v5
