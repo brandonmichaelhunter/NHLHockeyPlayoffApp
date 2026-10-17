@@ -277,7 +277,6 @@ jobs:
             manifests: |
               kubernetes/deployment.yaml
               kubernetes/service.yaml
-              kubernetes/website.yaml
             images: |
              ${{ env.REGISTRY }}/${{ github.repository_owner }}/nhlplayoffapp:${{ steps.tag_version.outputs.new_tag }}
             imagepullsecrets: |
