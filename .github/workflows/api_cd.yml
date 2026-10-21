@@ -285,7 +285,13 @@ jobs:
         - name: Wait for rollout (explicit) 
           run: | 
               kubectl rollout status deployment/nhlplayoffapp-deployment --namespace default --timeout=15m
-        
+
+        - name: Update environment variable on deployment
+          env:
+            APP_DATABASE_URL: ${{secrets.DATABASE_URL}}
+          run: |
+              kubectl set env deployment/nhlplayoffapp-deployment --namespace default DATABASE_URL="$APP_DATABASE_URL"
+            
         - name: Dump deployment diagnostics on failure 
           if: failure() 
           run: | 
