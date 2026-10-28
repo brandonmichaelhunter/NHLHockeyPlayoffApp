@@ -24,7 +24,7 @@ from .models.nhl_stats import (
     nhl_points_leaders,
 )
 
-# if os.environ.get("DOCKER_ENV)
+
 # from api.hockeyplayoffapi.models.nhl_scores import nhl_score
 from .models.nhl_scores import nhl_scores
 
